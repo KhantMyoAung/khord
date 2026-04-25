@@ -1,0 +1,432 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Khord — A browser-based pocket chord instrument. Map any controller or keyboard. Play chords, loops, drums & more.">
+    <title>Khord — Virtual Pocket Chord Instrument</title>
+    <link rel="stylesheet" href="css/main.css">
+    <!-- Tone.js CDN -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
+</head>
+<body>
+
+<!-- ═══════════════ Splash Screen ═══════════════ -->
+<div id="splash-screen">
+    <div class="splash-logo">Khord</div>
+    <div class="splash-subtitle">Virtual pocket instrument — map any controller or keyboard to play chords, loops, drums & more</div>
+    <button class="splash-cta" onclick="startApp()">
+        <span>▶</span> Start Playing
+    </button>
+    <div class="splash-hint">Click to enable audio • Connect a gamepad anytime</div>
+</div>
+
+<!-- ═══════════════ Notifications ═══════════════ -->
+<div id="notifications"></div>
+
+<!-- ═══════════════ Main App ═══════════════ -->
+<div id="app">
+
+    <!-- ── Top Bar ──────────────────────────────── -->
+    <header class="top-bar">
+        <div class="top-bar-left">
+            <div class="logo">Khord</div>
+            <span class="info-chip" style="font-size:0.65rem; color: var(--text-tertiary)">VIRTUAL</span>
+        </div>
+        <div class="top-bar-center">
+            <span class="info-chip accent" title="Musical Key">
+                🎵 Key: <span class="chip-value" id="display-key">C</span>
+            </span>
+            <span class="info-chip" title="Octave">
+                🎹 <span class="chip-value" id="display-octave">Oct 4</span>
+            </span>
+            <span class="info-chip" title="Instrument">
+                <span class="chip-value" id="display-instrument">◿ Saw</span>
+            </span>
+            <span class="info-chip" title="Mode">
+                <span class="chip-value" id="display-mode">▶ Play</span>
+            </span>
+            <span class="info-chip" title="BPM">
+                ⏱ <span class="chip-value" id="display-bpm">120 BPM</span>
+            </span>
+            <span class="info-chip" title="Volume">
+                🔊 <span class="chip-value" id="display-volume">70%</span>
+            </span>
+        </div>
+        <div class="top-bar-right">
+            <div class="gamepad-status" id="gamepad-status">
+                <div class="gamepad-dot"></div>
+                <span>🎮 No Controller</span>
+            </div>
+            <button class="btn-icon" onclick="App.openMappingPanel()" title="Controller & Key Mapping">⚙️</button>
+        </div>
+    </header>
+
+    <!-- ── Main Content ─────────────────────────── -->
+    <main class="main-content">
+
+        <!-- Left: Device Section -->
+        <div class="device-section">
+
+            <!-- OLED Screen -->
+            <div class="oled-container">
+                <div class="oled-screen" id="oled-screen">
+                    <div class="oled-top">
+                        <span class="oled-key">C4</span>
+                        <span class="oled-mode">▶ Play</span>
+                    </div>
+                    <div class="oled-chord">—</div>
+                    <div class="oled-bottom">
+                        <span class="oled-instrument">◿ Saw</span>
+                        <span class="oled-mod"></span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Device Body -->
+            <div class="device-body">
+
+                <!-- Function Buttons -->
+                <div class="function-buttons">
+                    <button class="func-btn key-btn" onclick="App.setKey(prompt('Enter key (C, C#, D, etc.)') || 'C')" title="Key (1)">
+                        KEY
+                    </button>
+                    <button class="func-btn sound-btn" onclick="cycleInstrumentUI(1)" title="Sound (2)">
+                        SOUND
+                    </button>
+                    <button class="func-btn mode-btn" onclick="cycleModeUI(1)" title="Mode (3)">
+                        MODE
+                    </button>
+                </div>
+
+                <!-- Joystick + Chord Buttons -->
+                <div class="controls-layout">
+
+                    <!-- Joystick -->
+                    <div class="joystick-container">
+                        <div class="joystick-housing">
+                            <div class="joystick-directions">
+                                <span class="joy-dir up">Flip</span>
+                                <span class="joy-dir down">Sus4</span>
+                                <span class="joy-dir left">Dim</span>
+                                <span class="joy-dir right">7th</span>
+                                <span class="joy-dir up-left">Aug</span>
+                                <span class="joy-dir up-right">Dom7</span>
+                                <span class="joy-dir down-left">6th</span>
+                                <span class="joy-dir down-right">9th</span>
+                            </div>
+                            <div class="joystick-knob" id="joystick-knob"></div>
+                        </div>
+                        <div class="joystick-label" id="joystick-label"></div>
+                    </div>
+
+                    <!-- 7 Chord Buttons -->
+                    <div class="chord-buttons-grid">
+                        <button class="chord-btn" id="chord-btn-0"
+                            onmousedown="App.pressChord(0)" onmouseup="App.releaseChord(0)" onmouseleave="App.releaseChord(0)"
+                            ontouchstart="App.pressChord(0)" ontouchend="App.releaseChord(0)">
+                            <span class="chord-key">A</span>
+                            <span class="chord-number">I</span>
+                            <span class="chord-name">C</span>
+                            <span class="chord-desc">Home</span>
+                        </button>
+                        <button class="chord-btn" id="chord-btn-1"
+                            onmousedown="App.pressChord(1)" onmouseup="App.releaseChord(1)" onmouseleave="App.releaseChord(1)"
+                            ontouchstart="App.pressChord(1)" ontouchend="App.releaseChord(1)">
+                            <span class="chord-key">S</span>
+                            <span class="chord-number">ii</span>
+                            <span class="chord-name">Dm</span>
+                            <span class="chord-desc">Soft</span>
+                        </button>
+                        <button class="chord-btn" id="chord-btn-2"
+                            onmousedown="App.pressChord(2)" onmouseup="App.releaseChord(2)" onmouseleave="App.releaseChord(2)"
+                            ontouchstart="App.pressChord(2)" ontouchend="App.releaseChord(2)">
+                            <span class="chord-key">D</span>
+                            <span class="chord-number">iii</span>
+                            <span class="chord-name">Em</span>
+                            <span class="chord-desc">Dark</span>
+                        </button>
+                        <button class="chord-btn" id="chord-btn-3"
+                            onmousedown="App.pressChord(3)" onmouseup="App.releaseChord(3)" onmouseleave="App.releaseChord(3)"
+                            ontouchstart="App.pressChord(3)" ontouchend="App.releaseChord(3)">
+                            <span class="chord-key">F</span>
+                            <span class="chord-number">IV</span>
+                            <span class="chord-name">F</span>
+                            <span class="chord-desc">Lift</span>
+                        </button>
+                        <button class="chord-btn" id="chord-btn-4"
+                            onmousedown="App.pressChord(4)" onmouseup="App.releaseChord(4)" onmouseleave="App.releaseChord(4)"
+                            ontouchstart="App.pressChord(4)" ontouchend="App.releaseChord(4)">
+                            <span class="chord-key">G</span>
+                            <span class="chord-number">V</span>
+                            <span class="chord-name">G</span>
+                            <span class="chord-desc">Tension</span>
+                        </button>
+                        <button class="chord-btn" id="chord-btn-5"
+                            onmousedown="App.pressChord(5)" onmouseup="App.releaseChord(5)" onmouseleave="App.releaseChord(5)"
+                            ontouchstart="App.pressChord(5)" ontouchend="App.releaseChord(5)">
+                            <span class="chord-key">H</span>
+                            <span class="chord-number">vi</span>
+                            <span class="chord-name">Am</span>
+                            <span class="chord-desc">Emotional</span>
+                        </button>
+                        <button class="chord-btn" id="chord-btn-6"
+                            onmousedown="App.pressChord(6)" onmouseup="App.releaseChord(6)" onmouseleave="App.releaseChord(6)"
+                            ontouchstart="App.pressChord(6)" ontouchend="App.releaseChord(6)">
+                            <span class="chord-key">J</span>
+                            <span class="chord-number">vii°</span>
+                            <span class="chord-name">Bdim</span>
+                            <span class="chord-desc">Suspense</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Mode Info -->
+                <div class="mode-info-bar">
+                    <span>Joystick: Arrow Keys</span>
+                    <span>•</span>
+                    <span id="mode-info"></span>
+                </div>
+            </div>
+
+            <!-- Piano Visualization -->
+            <div class="panel-card">
+                <div class="panel-title">Piano Keys</div>
+                <div class="piano-container" id="piano-container">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Waveform -->
+            <div class="panel-card">
+                <div class="panel-title">Waveform</div>
+                <div class="waveform-container">
+                    <canvas id="waveform-canvas" width="800" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel -->
+        <div class="right-panel">
+
+            <!-- Key Selector -->
+            <div class="panel-card">
+                <div class="panel-title">Key</div>
+                <div class="key-selector" id="key-selector">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Instruments -->
+            <div class="panel-card">
+                <div class="panel-title">Instruments</div>
+                <div class="instrument-grid" id="instrument-grid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Modes -->
+            <div class="panel-card">
+                <div class="panel-title">Play Modes</div>
+                <div class="mode-grid" id="mode-grid">
+                    <!-- Generated by JS -->
+                </div>
+            </div>
+
+            <!-- Effects -->
+            <div class="panel-card">
+                <div class="panel-title">Effects</div>
+                <div class="effects-grid">
+                    <button class="fx-toggle" id="fx-reverb" onclick="App.toggleEffect('reverb')">Reverb</button>
+                    <button class="fx-toggle" id="fx-delay" onclick="App.toggleEffect('delay')">Delay</button>
+                    <button class="fx-toggle" id="fx-chorus" onclick="App.toggleEffect('chorus')">Chorus</button>
+                    <button class="fx-toggle" id="fx-tremolo" onclick="App.toggleEffect('tremolo')">Tremolo</button>
+                    <button class="fx-toggle" id="fx-filter" onclick="App.toggleEffect('filter')">Filter</button>
+                    <button class="fx-toggle" id="fx-distortion" onclick="App.toggleEffect('distortion')">Distort</button>
+                </div>
+            </div>
+
+            <!-- BPM & Volume -->
+            <div class="panel-card">
+                <div class="panel-title">Controls</div>
+                <div style="display:flex; flex-direction:column; gap:12px;">
+                    <div class="control-row">
+                        <span class="control-label">BPM</span>
+                        <input type="range" class="control-slider" min="40" max="300" value="120"
+                            oninput="App.setBPM(parseInt(this.value))">
+                        <span class="control-value" id="bpm-value">120</span>
+                    </div>
+                    <div class="control-row">
+                        <span class="control-label">Vol</span>
+                        <input type="range" class="control-slider" min="0" max="100" value="70"
+                            oninput="App.setVolume(parseInt(this.value)/100)">
+                        <span class="control-value" id="vol-value">70%</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Reference -->
+            <div class="panel-card">
+                <div class="panel-title">Keyboard Shortcuts</div>
+                <div style="font-size:0.7rem; color:var(--text-tertiary); display:grid; grid-template-columns:1fr 1fr; gap:4px;">
+                    <span>A-J → Chords 1-7</span>
+                    <span>↑↓←→ → Joystick</span>
+                    <span>1 → Key menu</span>
+                    <span>2 → Sound</span>
+                    <span>3 → Mode</span>
+                    <span>Space → Looper</span>
+                    <span>Q/W → Oct ↓/↑</span>
+                    <span>E/R → Key ↓/↑</span>
+                    <span>Z/X → Sound ←/→</span>
+                    <span>C/V → Mode ←/→</span>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- ── Bottom Panel — Looper ────────────────── -->
+    <footer class="bottom-panel">
+        <div class="looper-controls">
+            <button class="loop-btn" id="loop-rec-btn" onclick="App.toggleLooper()" title="Record / Stop (Space)">⏺</button>
+            <button class="loop-btn" onclick="App.clearLooper()" title="Clear All">🗑️</button>
+        </div>
+        <div class="looper-tracks">
+            <div class="loop-track" id="loop-track-0"><span class="track-number">1</span><span class="track-label">Empty</span></div>
+            <div class="loop-track" id="loop-track-1"><span class="track-number">2</span><span class="track-label">Empty</span></div>
+            <div class="loop-track" id="loop-track-2"><span class="track-number">3</span><span class="track-label">Empty</span></div>
+            <div class="loop-track" id="loop-track-3"><span class="track-number">4</span><span class="track-label">Empty</span></div>
+            <div class="loop-track" id="loop-track-4"><span class="track-number">5</span><span class="track-label">Empty</span></div>
+            <div class="loop-track" id="loop-track-5"><span class="track-number">6</span><span class="track-label">Empty</span></div>
+        </div>
+        <div style="font-size:0.7rem; color:var(--text-tertiary); white-space:nowrap;">
+            6-Track Looper
+        </div>
+    </footer>
+</div>
+
+<!-- ═══════════════ Mapping Panel Overlay ═══════════════ -->
+<div class="mapping-overlay" id="mapping-panel">
+    <div class="mapping-panel">
+        <div class="mapping-header">
+            <h2>⚙️ Controller & Key Mapping</h2>
+            <button class="mapping-close" onclick="App.closeMappingPanel()">✕</button>
+        </div>
+        <p style="font-size:0.85rem; color:var(--text-secondary); margin-bottom:16px;">
+            Click a key/button cell to remap. Press a key on your keyboard or button on your gamepad to assign it.
+        </p>
+        <div style="display:grid; grid-template-columns:1fr 100px 100px; gap:8px; padding:0 12px; margin-bottom:8px;">
+            <span style="font-size:0.65rem; color:var(--text-tertiary); font-weight:700; text-transform:uppercase;">Function</span>
+            <span style="font-size:0.65rem; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:center;">Keyboard</span>
+            <span style="font-size:0.65rem; color:var(--text-tertiary); font-weight:700; text-transform:uppercase; text-align:center;">Gamepad</span>
+        </div>
+        <div class="mapping-grid" id="mapping-grid">
+            <!-- Generated by App.renderMappingPanel() -->
+        </div>
+        <div class="mapping-actions">
+            <button class="btn btn-danger" onclick="App.resetAllMappings()">Reset to Default</button>
+            <button class="btn btn-primary" onclick="App.closeMappingPanel()">Done</button>
+        </div>
+    </div>
+</div>
+
+<!-- ═══════════════ Scripts ═══════════════ -->
+<script src="js/chord-engine.js"></script>
+<script src="js/audio-engine.js"></script>
+<script src="js/input-manager.js"></script>
+<script src="js/modes.js"></script>
+<script src="js/looper.js"></script>
+<script src="js/app.js"></script>
+<script>
+    // ── Boot ──────────────────────────────────────────────────
+    async function startApp() {
+        const splash = document.getElementById('splash-screen');
+        splash.classList.add('hidden');
+        await App.init();
+        buildUI();
+    }
+
+    function buildUI() {
+        buildPiano();
+        buildKeySelector();
+        buildInstrumentGrid();
+        buildModeGrid();
+    }
+
+    // ── Piano Keys ───────────────────────────────────────────
+    function buildPiano() {
+        const container = document.getElementById('piano-container');
+        if (!container) return;
+
+        const notes = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B',
+                        'C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        const isBlack = [0,1,0,1,0,0,1,0,1,0,1,0];
+
+        container.innerHTML = notes.map((note, i) => {
+            const black = isBlack[i % 12];
+            return `<div class="piano-key ${black ? 'black' : 'white'}" data-note="${note}"></div>`;
+        }).join('');
+    }
+
+    // ── Key Selector ─────────────────────────────────────────
+    function buildKeySelector() {
+        const container = document.getElementById('key-selector');
+        if (!container) return;
+
+        const keys = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+        container.innerHTML = keys.map(key => {
+            const active = ChordEngine.getCurrentKey() === key ? 'active' : '';
+            return `<button class="key-btn ${active}" onclick="selectKey('${key}')">${key}</button>`;
+        }).join('');
+    }
+
+    function selectKey(key) {
+        App.setKey(key);
+        buildKeySelector();
+    }
+
+    // ── Instrument Grid ──────────────────────────────────────
+    function buildInstrumentGrid() {
+        const grid = document.getElementById('instrument-grid');
+        if (!grid) return;
+
+        grid.innerHTML = AudioEngine.INSTRUMENTS.map((inst, i) => {
+            const active = AudioEngine.getInstrumentIndex() === i ? 'active' : '';
+            return `<button class="inst-btn ${active}" onclick="selectInstrument(${i})">${inst.icon} ${inst.name}</button>`;
+        }).join('');
+    }
+
+    function selectInstrument(index) {
+        App.setInstrument(index);
+        buildInstrumentGrid();
+    }
+
+    // ── Mode Grid ────────────────────────────────────────────
+    function buildModeGrid() {
+        const grid = document.getElementById('mode-grid');
+        if (!grid) return;
+
+        grid.innerHTML = Modes.MODE_LIST.map((mode, i) => {
+            const active = Modes.getModeIndex() === i ? 'active' : '';
+            return `<button class="mode-btn ${active}" onclick="selectMode(${i})">${mode.icon} ${mode.name}</button>`;
+        }).join('');
+    }
+
+    function selectMode(index) {
+        App.setMode(index);
+        buildModeGrid();
+    }
+
+    // ── Helpers for UI buttons ───────────────────────────────
+    function cycleInstrumentUI(dir) {
+        if (dir > 0) AudioEngine.nextInstrument(); else AudioEngine.prevInstrument();
+        buildInstrumentGrid();
+    }
+
+    function cycleModeUI(dir) {
+        if (dir > 0) Modes.nextMode(); else Modes.prevMode();
+        buildModeGrid();
+    }
+</script>
+
+</body>
+</html>
