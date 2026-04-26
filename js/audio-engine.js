@@ -12,6 +12,7 @@ const AudioEngine = (() => {
     let analyser = null;
     let drumPlayers = {};
     let activeNotes = new Set();
+    let recordHook = null; // Called on every audio event when recording
 
     // ── Instrument Presets ─────────────────────────────────────────────
     const INSTRUMENTS = [
@@ -241,6 +242,7 @@ const AudioEngine = (() => {
         try {
             synth.triggerAttack(notes, Tone.now(), velocity);
             notes.forEach(n => activeNotes.add(n));
+            if (recordHook) recordHook('press', { notes, velocity });
         } catch (e) {
             console.warn('Chord play error:', e);
         }
@@ -251,6 +253,7 @@ const AudioEngine = (() => {
         try {
             synth.triggerRelease(notes, Tone.now());
             notes.forEach(n => activeNotes.delete(n));
+            if (recordHook) recordHook('release', { notes });
         } catch (e) {
             console.warn('Chord release error:', e);
         }
@@ -266,6 +269,7 @@ const AudioEngine = (() => {
 
     function playStrum(notes, delayMs = 50) {
         if (!synth) return;
+        if (recordHook) recordHook('strum', { notes, strumSpeed: delayMs });
         notes.forEach((note, i) => {
             const time = Tone.now() + (i * delayMs / 1000);
             try {
@@ -287,6 +291,7 @@ const AudioEngine = (() => {
     function playDrum(drumKey) {
         const drum = drumPlayers[drumKey];
         if (!drum) return;
+        if (recordHook) recordHook('drum', { drumKey });
         try {
             if (drum instanceof Tone.NoiseSynth) {
                 drum.triggerAttackRelease('16n');
@@ -380,6 +385,10 @@ const AudioEngine = (() => {
         getBPM: () => Tone.Transport.bpm.value,
 
         isInitialized: () => isInitialized,
-        getActiveNotes: () => [...activeNotes]
+        getActiveNotes: () => [...activeNotes],
+
+        // Recording hook — set a callback to capture all audio events
+        setRecordHook: (hook) => { recordHook = hook; },
+        clearRecordHook: () => { recordHook = null; }
     };
 })();

@@ -168,38 +168,13 @@ const App = (() => {
         const result = Modes.handleChordPress(buttonIndex, currentJoystickDir);
         lastPlayedChord = result?.chord || null;
 
-        // If recording, capture rich event data for looper playback
-        if (Looper.isRecording() && result) {
-            const mode = result.mode || 'play';
-            if (mode === 'drum') {
-                Looper.recordNoteEvent('drum', { drumKey: result.drum?.key }, Tone.now());
-            } else if (mode === 'strum') {
-                Looper.recordNoteEvent('strum', {
-                    notes: result.chord?.notes,
-                    strumSpeed: result.speed || 50
-                }, Tone.now());
-            } else if (result.chord?.notes) {
-                Looper.recordNoteEvent('press', {
-                    notes: result.chord.notes,
-                    velocity: 0.7
-                }, Tone.now());
-            }
-        }
-
         updateChordDisplay(result);
         highlightButton(buttonIndex, true);
     }
 
     function handleChordRelease(buttonIndex) {
         activeChordButtons.delete(buttonIndex);
-        const prevNotes = Modes.handleChordRelease(buttonIndex);
-
-        if (Looper.isRecording()) {
-            // Record release with the notes that were playing
-            Looper.recordNoteEvent('release', {
-                notes: lastPlayedChord?.notes || null
-            }, Tone.now());
-        }
+        Modes.handleChordRelease(buttonIndex);
 
         highlightButton(buttonIndex, false);
         if (activeChordButtons.size === 0) {
@@ -240,10 +215,15 @@ const App = (() => {
         const result = Looper.toggleRecord();
         if (result.action === 'start') {
             showNotification(`⏺ Recording Track ${result.track + 1}`, 'record');
-            // Update record button visual
+            // Wire up audio-level recording hook
+            AudioEngine.setRecordHook((type, data) => {
+                Looper.recordNoteEvent(type, data, Tone.now());
+            });
             const recBtn = document.getElementById('loop-rec-btn');
             if (recBtn) recBtn.classList.add('recording');
         } else {
+            // Clear the recording hook
+            AudioEngine.clearRecordHook();
             showNotification(`⏹ Recorded ${result.duration?.toFixed(1)}s (${result.events} events)`, 'success');
             const recBtn = document.getElementById('loop-rec-btn');
             if (recBtn) recBtn.classList.remove('recording');
