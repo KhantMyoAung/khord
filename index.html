@@ -56,6 +56,21 @@
             </span>
         </div>
         <div class="top-bar-right">
+            <!-- Theme Picker -->
+            <div class="theme-picker" title="Change theme">
+                <button class="theme-swatch theme-swatch-default active" id="theme-default"
+                    onclick="setTheme('default')" title="Default (Dark)"
+                    style="background:#0a0a0f; border-color:rgba(0,240,255,0.4);"></button>
+                <button class="theme-swatch" id="theme-strawberry"
+                    onclick="setTheme('strawberry')" title="Strawberry"
+                    style="background:linear-gradient(135deg,#f37f83,#e53c58);"></button>
+                <button class="theme-swatch" id="theme-gruvbox-light"
+                    onclick="setTheme('gruvbox-light')" title="Gruvbox Light"
+                    style="background:linear-gradient(135deg,#fbf1c7,#689d6a);"></button>
+                <button class="theme-swatch" id="theme-beach"
+                    onclick="setTheme('beach')" title="Beach"
+                    style="background:linear-gradient(135deg,#ffeead,#96ceb4);"></button>
+            </div>
             <div class="gamepad-status" id="gamepad-status">
                 <div class="gamepad-dot"></div>
                 <span>🎮 No Controller</span>
@@ -546,6 +561,7 @@
         setupControllerInteraction();
         setupJoystickDrag();
         restoreLayout();
+        restoreTheme();
     }
 
     // ── Piano Keys ───────────────────────────────────────────
@@ -835,6 +851,33 @@
     function cycleModeUI(dir) {
         if (dir > 0) Modes.nextMode(); else Modes.prevMode();
         buildModeGrid();
+    }
+
+    // ── Theme Switcher ───────────────────────────────────────────
+    function setTheme(theme) {
+        const body = document.body;
+        // Remove all theme swatches active state
+        document.querySelectorAll('.theme-swatch').forEach(s => s.classList.remove('active'));
+
+        if (theme === 'default') {
+            body.removeAttribute('data-theme');
+        } else {
+            body.setAttribute('data-theme', theme);
+        }
+
+        // Mark the active swatch
+        const activeBtn = document.getElementById(`theme-${theme}`);
+        if (activeBtn) activeBtn.classList.add('active');
+
+        // Persist
+        try { localStorage.setItem('khord_theme', theme); } catch(e) {}
+    }
+
+    function restoreTheme() {
+        try {
+            const saved = localStorage.getItem('khord_theme');
+            if (saved) setTheme(saved);
+        } catch(e) {}
     }
 </script>
 
