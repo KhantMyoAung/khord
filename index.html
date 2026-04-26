@@ -169,7 +169,7 @@
                     <div class="chord-buttons-grid">
                         <button class="chord-btn" id="chord-btn-0"
                             onmousedown="App.pressChord(0)" onmouseup="App.releaseChord(0)" onmouseleave="App.releaseChord(0)"
-                            ontouchstart="App.pressChord(0)" ontouchend="App.releaseChord(0)">
+                            ontouchstart="event.preventDefault(); App.pressChord(0)" ontouchend="event.preventDefault(); App.releaseChord(0)">
                             <span class="chord-key">A</span>
                             <span class="chord-number">I</span>
                             <span class="chord-name">C</span>
@@ -177,7 +177,7 @@
                         </button>
                         <button class="chord-btn" id="chord-btn-1"
                             onmousedown="App.pressChord(1)" onmouseup="App.releaseChord(1)" onmouseleave="App.releaseChord(1)"
-                            ontouchstart="App.pressChord(1)" ontouchend="App.releaseChord(1)">
+                            ontouchstart="event.preventDefault(); App.pressChord(1)" ontouchend="event.preventDefault(); App.releaseChord(1)">
                             <span class="chord-key">S</span>
                             <span class="chord-number">ii</span>
                             <span class="chord-name">Dm</span>
@@ -185,7 +185,7 @@
                         </button>
                         <button class="chord-btn" id="chord-btn-2"
                             onmousedown="App.pressChord(2)" onmouseup="App.releaseChord(2)" onmouseleave="App.releaseChord(2)"
-                            ontouchstart="App.pressChord(2)" ontouchend="App.releaseChord(2)">
+                            ontouchstart="event.preventDefault(); App.pressChord(2)" ontouchend="event.preventDefault(); App.releaseChord(2)">
                             <span class="chord-key">D</span>
                             <span class="chord-number">iii</span>
                             <span class="chord-name">Em</span>
@@ -193,7 +193,7 @@
                         </button>
                         <button class="chord-btn" id="chord-btn-3"
                             onmousedown="App.pressChord(3)" onmouseup="App.releaseChord(3)" onmouseleave="App.releaseChord(3)"
-                            ontouchstart="App.pressChord(3)" ontouchend="App.releaseChord(3)">
+                            ontouchstart="event.preventDefault(); App.pressChord(3)" ontouchend="event.preventDefault(); App.releaseChord(3)">
                             <span class="chord-key">F</span>
                             <span class="chord-number">IV</span>
                             <span class="chord-name">F</span>
@@ -201,7 +201,7 @@
                         </button>
                         <button class="chord-btn" id="chord-btn-4"
                             onmousedown="App.pressChord(4)" onmouseup="App.releaseChord(4)" onmouseleave="App.releaseChord(4)"
-                            ontouchstart="App.pressChord(4)" ontouchend="App.releaseChord(4)">
+                            ontouchstart="event.preventDefault(); App.pressChord(4)" ontouchend="event.preventDefault(); App.releaseChord(4)">
                             <span class="chord-key">G</span>
                             <span class="chord-number">V</span>
                             <span class="chord-name">G</span>
@@ -209,7 +209,7 @@
                         </button>
                         <button class="chord-btn" id="chord-btn-5"
                             onmousedown="App.pressChord(5)" onmouseup="App.releaseChord(5)" onmouseleave="App.releaseChord(5)"
-                            ontouchstart="App.pressChord(5)" ontouchend="App.releaseChord(5)">
+                            ontouchstart="event.preventDefault(); App.pressChord(5)" ontouchend="event.preventDefault(); App.releaseChord(5)">
                             <span class="chord-key">H</span>
                             <span class="chord-number">vi</span>
                             <span class="chord-name">Am</span>
@@ -217,7 +217,7 @@
                         </button>
                         <button class="chord-btn" id="chord-btn-6"
                             onmousedown="App.pressChord(6)" onmouseup="App.releaseChord(6)" onmouseleave="App.releaseChord(6)"
-                            ontouchstart="App.pressChord(6)" ontouchend="App.releaseChord(6)">
+                            ontouchstart="event.preventDefault(); App.pressChord(6)" ontouchend="event.preventDefault(); App.releaseChord(6)">
                             <span class="chord-key">J</span>
                             <span class="chord-number">vii°</span>
                             <span class="chord-name">Bdim</span>
@@ -562,6 +562,7 @@
 <script>
     // ── Boot ──────────────────────────────────────────────────
     async function startApp() {
+        await Tone.start(); // Ensure this is the very first thing called on interaction
         const splash = document.getElementById('splash-screen');
         splash.classList.add('hidden');
         await App.init();
