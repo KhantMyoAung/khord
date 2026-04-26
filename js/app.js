@@ -345,6 +345,12 @@ const App = (() => {
         }
         if (bpmEl) bpmEl.textContent = `${bpm} BPM`;
         if (volEl) volEl.textContent = `${Math.round(volume * 100)}%`;
+
+        // Also update the slider panel labels
+        const bpmVal = document.getElementById('bpm-value');
+        const volVal = document.getElementById('vol-value');
+        if (bpmVal) bpmVal.textContent = bpm;
+        if (volVal) volVal.textContent = `${Math.round(volume * 100)}%`;
     }
 
     function updateChordButtons() {
