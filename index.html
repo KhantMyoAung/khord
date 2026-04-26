@@ -31,7 +31,9 @@
     <header class="top-bar">
         <div class="top-bar-left">
             <div class="logo">Khord</div>
-            <span class="info-chip" style="font-size:0.65rem; color: var(--text-tertiary)">VIRTUAL</span>
+            <a href="songs/index.html" class="music-sheets-btn" title="Browse Song Sheets & Lyrics">
+                🎵 Music Sheets
+            </a>
         </div>
         <div class="top-bar-center">
             <span class="info-chip accent" title="Musical Key">
@@ -83,8 +85,21 @@
                 </div>
             </div>
 
+            <!-- Layout Toggle -->
+            <div class="layout-toggle-bar">
+                <button class="layout-toggle-btn active" id="layout-btn-keyboard" onclick="switchLayout('keyboard')">
+                    ⌨️ Keyboard
+                </button>
+                <button class="layout-toggle-btn" id="layout-btn-controller" onclick="switchLayout('controller')">
+                    🎮 Controller
+                </button>
+            </div>
+
             <!-- Device Body -->
-            <div class="device-body">
+            <div class="device-body" id="device-body">
+
+                <!-- ═══ KEYBOARD LAYOUT ═══ -->
+                <div class="layout-view layout-keyboard active" id="layout-keyboard">
 
                 <!-- Function Buttons -->
                 <div class="function-buttons">
@@ -187,6 +202,141 @@
                     <span>•</span>
                     <span id="mode-info"></span>
                 </div>
+
+                </div><!-- end .layout-keyboard -->
+
+                <!-- ═══ CONTROLLER LAYOUT ═══ -->
+                <div class="layout-view layout-controller" id="layout-controller">
+                    <div class="controller-svg-wrap">
+                        <svg id="controller-svg" viewBox="0 0 800 520" xmlns="http://www.w3.org/2000/svg">
+                            <!-- Controller body -->
+                            <path class="ctrl-body" d="M140,100 C140,60 200,40 400,40 C600,40 660,60 660,100 L680,260 C700,340 720,420 640,460 C580,490 540,460 480,440 L320,440 C260,460 220,490 160,460 C80,420 100,340 120,260 Z" />
+                            <!-- Left grip -->
+                            <path class="ctrl-grip" d="M120,260 C100,340 80,420 160,460 C200,478 230,465 260,450 L280,380 C260,340 240,310 230,280 Z" />
+                            <!-- Right grip -->
+                            <path class="ctrl-grip" d="M680,260 C700,340 720,420 640,460 C600,478 570,465 540,450 L520,380 C540,340 560,310 570,280 Z" />
+
+                            <!-- ══ Left Trigger (LT) ══ -->
+                            <g class="ctrl-btn-group" data-func="chord7" id="ctrl-lt">
+                                <rect x="185" y="12" width="70" height="30" rx="8" class="ctrl-trigger" />
+                                <text x="220" y="32" class="ctrl-label">LT</text>
+                                <text x="220" y="6" class="ctrl-bind-label" id="ctrl-label-lt">VII</text>
+                            </g>
+                            <!-- Right Trigger (RT) -->
+                            <g class="ctrl-btn-group" data-func="looperToggle" id="ctrl-rt">
+                                <rect x="545" y="12" width="70" height="30" rx="8" class="ctrl-trigger" />
+                                <text x="580" y="32" class="ctrl-label">RT</text>
+                                <text x="580" y="6" class="ctrl-bind-label" id="ctrl-label-rt">REC</text>
+                            </g>
+
+                            <!-- Left Bumper (LB) -->
+                            <g class="ctrl-btn-group" data-func="chord5" id="ctrl-lb">
+                                <rect x="185" y="48" width="80" height="22" rx="6" class="ctrl-bumper" />
+                                <text x="225" y="64" class="ctrl-label">LB</text>
+                                <text x="225" y="44" class="ctrl-bind-label" id="ctrl-label-lb">V</text>
+                            </g>
+                            <!-- Right Bumper (RB) -->
+                            <g class="ctrl-btn-group" data-func="chord6" id="ctrl-rb">
+                                <rect x="535" y="48" width="80" height="22" rx="6" class="ctrl-bumper" />
+                                <text x="575" y="64" class="ctrl-label">RB</text>
+                                <text x="575" y="44" class="ctrl-bind-label" id="ctrl-label-rb">VI</text>
+                            </g>
+
+                            <!-- ══ D-Pad (Left side) ══ -->
+                            <g class="ctrl-dpad-group" transform="translate(250, 200)">
+                                <circle cx="0" cy="0" r="55" class="ctrl-dpad-bg" />
+                                <!-- Up -->
+                                <g class="ctrl-btn-group" data-func="octaveUp" id="ctrl-dpad-up">
+                                    <path d="M-12,-48 L12,-48 L12,-16 L-12,-16 Z" class="ctrl-dpad-btn" />
+                                    <text x="0" y="-26" class="ctrl-label-sm">▲</text>
+                                </g>
+                                <!-- Down -->
+                                <g class="ctrl-btn-group" data-func="octaveDown" id="ctrl-dpad-down">
+                                    <path d="M-12,16 L12,16 L12,48 L-12,48 Z" class="ctrl-dpad-btn" />
+                                    <text x="0" y="38" class="ctrl-label-sm">▼</text>
+                                </g>
+                                <!-- Left -->
+                                <g class="ctrl-btn-group" data-func="prevInstrument" id="ctrl-dpad-left">
+                                    <path d="M-48,-12 L-16,-12 L-16,12 L-48,12 Z" class="ctrl-dpad-btn" />
+                                    <text x="-32" y="5" class="ctrl-label-sm">◄</text>
+                                </g>
+                                <!-- Right -->
+                                <g class="ctrl-btn-group" data-func="nextInstrument" id="ctrl-dpad-right">
+                                    <path d="M16,-12 L48,-12 L48,12 L16,12 Z" class="ctrl-dpad-btn" />
+                                    <text x="32" y="5" class="ctrl-label-sm">►</text>
+                                </g>
+                                <!-- Center -->
+                                <rect x="-12" y="-12" width="24" height="24" class="ctrl-dpad-center" />
+                            </g>
+                            <!-- D-pad labels -->
+                            <text x="250" y="128" class="ctrl-bind-label">Oct↑</text>
+                            <text x="250" y="278" class="ctrl-bind-label">Oct↓</text>
+                            <text x="178" y="203" class="ctrl-bind-label">◄Snd</text>
+                            <text x="322" y="203" class="ctrl-bind-label">Snd►</text>
+
+                            <!-- ══ Face Buttons (Right side — A/B/X/Y) ══ -->
+                            <!-- A (bottom) = Chord 1 -->
+                            <g class="ctrl-btn-group" data-func="chord1" id="ctrl-a">
+                                <circle cx="560" cy="230" r="22" class="ctrl-face-btn ctrl-face-a" />
+                                <text x="560" y="235" class="ctrl-label">A</text>
+                                <text x="560" y="260" class="ctrl-bind-label" id="ctrl-label-a">I</text>
+                            </g>
+                            <!-- B (right) = Chord 2 -->
+                            <g class="ctrl-btn-group" data-func="chord2" id="ctrl-b">
+                                <circle cx="600" cy="190" r="22" class="ctrl-face-btn ctrl-face-b" />
+                                <text x="600" y="195" class="ctrl-label">B</text>
+                                <text x="630" y="195" class="ctrl-bind-label" id="ctrl-label-b">II</text>
+                            </g>
+                            <!-- X (left) = Chord 3 -->
+                            <g class="ctrl-btn-group" data-func="chord3" id="ctrl-x">
+                                <circle cx="520" cy="190" r="22" class="ctrl-face-btn ctrl-face-x" />
+                                <text x="520" y="195" class="ctrl-label">X</text>
+                                <text x="490" y="195" class="ctrl-bind-label" id="ctrl-label-x">III</text>
+                            </g>
+                            <!-- Y (top) = Chord 4 -->
+                            <g class="ctrl-btn-group" data-func="chord4" id="ctrl-y">
+                                <circle cx="560" cy="150" r="22" class="ctrl-face-btn ctrl-face-y" />
+                                <text x="560" y="155" class="ctrl-label">Y</text>
+                                <text x="560" y="122" class="ctrl-bind-label" id="ctrl-label-y">IV</text>
+                            </g>
+
+                            <!-- ══ Center Buttons ══ -->
+                            <!-- Select/Back -->
+                            <g class="ctrl-btn-group" data-func="btnMode" id="ctrl-select">
+                                <circle cx="355" cy="160" r="11" class="ctrl-center-btn" />
+                                <text x="355" y="164" class="ctrl-label-xs">⊙</text>
+                                <text x="355" y="142" class="ctrl-bind-label" id="ctrl-label-select">MODE</text>
+                            </g>
+                            <!-- Start -->
+                            <g class="ctrl-btn-group" data-func="btnSound" id="ctrl-start">
+                                <circle cx="445" cy="160" r="11" class="ctrl-center-btn" />
+                                <text x="445" y="164" class="ctrl-label-xs">⊙</text>
+                                <text x="445" y="142" class="ctrl-bind-label" id="ctrl-label-start">SND</text>
+                            </g>
+
+                            <!-- ══ Left Stick (Joystick — mapped to modifier) ══ -->
+                            <g id="ctrl-left-stick-group">
+                                <circle cx="330" cy="300" r="40" class="ctrl-stick-bg" />
+                                <circle cx="330" cy="300" r="24" class="ctrl-stick-knob" id="ctrl-left-stick" />
+                                <text x="330" y="355" class="ctrl-bind-label">JOYSTICK</text>
+                            </g>
+
+                            <!-- ══ Right Stick ══ -->
+                            <g id="ctrl-right-stick-group">
+                                <circle cx="470" cy="300" r="40" class="ctrl-stick-bg" />
+                                <circle cx="470" cy="300" r="24" class="ctrl-stick-knob" id="ctrl-right-stick" />
+                                <text x="470" y="355" class="ctrl-bind-label">KEY</text>
+                            </g>
+                        </svg>
+                    </div>
+                    <div class="controller-legend">
+                        <div class="legend-item"><span class="legend-color" style="background:var(--cyan)"></span> Chords (A/B/X/Y + LB/RB/LT)</div>
+                        <div class="legend-item"><span class="legend-color" style="background:var(--purple)"></span> Joystick = Modifier</div>
+                        <div class="legend-item"><span class="legend-color" style="background:var(--green)"></span> D-Pad = Oct/Sound</div>
+                        <div class="legend-item"><span class="legend-color" style="background:var(--red)"></span> RT = Record</div>
+                    </div>
+                </div><!-- end .layout-controller -->
+
             </div>
 
             <!-- Piano Visualization -->
@@ -274,32 +424,75 @@
                     <span>1 → Key menu</span>
                     <span>2 → Sound</span>
                     <span>3 → Mode</span>
-                    <span>Space → Looper</span>
+                    <span>Space → Rec/Stop</span>
+                    <span>P → Play Loop</span>
                     <span>Q/W → Oct ↓/↑</span>
                     <span>E/R → Key ↓/↑</span>
                     <span>Z/X → Sound ←/→</span>
                     <span>C/V → Mode ←/→</span>
                 </div>
             </div>
+
         </div>
     </main>
 
     <!-- ── Bottom Panel — Looper ────────────────── -->
     <footer class="bottom-panel">
+        <div class="looper-header">
+            <span class="looper-title">🔁 LOOPER</span>
+            <span class="looper-time" id="looper-time">0.0s</span>
+        </div>
         <div class="looper-controls">
             <button class="loop-btn" id="loop-rec-btn" onclick="App.toggleLooper()" title="Record / Stop (Space)">⏺</button>
-            <button class="loop-btn" onclick="App.clearLooper()" title="Clear All">🗑️</button>
+            <button class="loop-btn" id="loop-play-btn" onclick="App.toggleLooperPlayback()" title="Play / Stop Playback (P)">▶</button>
+            <button class="loop-btn" onclick="App.clearLooper()" title="Clear All Tracks">🗑️</button>
+        </div>
+        <div class="looper-progress-bar">
+            <div class="looper-progress-fill" id="looper-progress"></div>
         </div>
         <div class="looper-tracks">
-            <div class="loop-track" id="loop-track-0"><span class="track-number">1</span><span class="track-label">Empty</span></div>
-            <div class="loop-track" id="loop-track-1"><span class="track-number">2</span><span class="track-label">Empty</span></div>
-            <div class="loop-track" id="loop-track-2"><span class="track-number">3</span><span class="track-label">Empty</span></div>
-            <div class="loop-track" id="loop-track-3"><span class="track-number">4</span><span class="track-label">Empty</span></div>
-            <div class="loop-track" id="loop-track-4"><span class="track-number">5</span><span class="track-label">Empty</span></div>
-            <div class="loop-track" id="loop-track-5"><span class="track-number">6</span><span class="track-label">Empty</span></div>
-        </div>
-        <div style="font-size:0.7rem; color:var(--text-tertiary); white-space:nowrap;">
-            6-Track Looper
+            <div class="loop-track" id="loop-track-0" onclick="App.toggleLooperTrackMute(0)">
+                <span class="track-number">1</span>
+                <span class="track-label">Empty</span>
+                <div class="track-progress-fill" id="track-progress-0"></div>
+                <button class="track-mute-btn" id="track-mute-0" onclick="event.stopPropagation(); App.toggleLooperTrackMute(0)" title="Mute Track 1">M</button>
+                <button class="track-solo-btn" id="track-solo-0" onclick="event.stopPropagation(); App.toggleLooperTrackSolo(0)" title="Solo Track 1">S</button>
+            </div>
+            <div class="loop-track" id="loop-track-1" onclick="App.toggleLooperTrackMute(1)">
+                <span class="track-number">2</span>
+                <span class="track-label">Empty</span>
+                <div class="track-progress-fill" id="track-progress-1"></div>
+                <button class="track-mute-btn" id="track-mute-1" onclick="event.stopPropagation(); App.toggleLooperTrackMute(1)" title="Mute Track 2">M</button>
+                <button class="track-solo-btn" id="track-solo-1" onclick="event.stopPropagation(); App.toggleLooperTrackSolo(1)" title="Solo Track 2">S</button>
+            </div>
+            <div class="loop-track" id="loop-track-2" onclick="App.toggleLooperTrackMute(2)">
+                <span class="track-number">3</span>
+                <span class="track-label">Empty</span>
+                <div class="track-progress-fill" id="track-progress-2"></div>
+                <button class="track-mute-btn" id="track-mute-2" onclick="event.stopPropagation(); App.toggleLooperTrackMute(2)" title="Mute Track 3">M</button>
+                <button class="track-solo-btn" id="track-solo-2" onclick="event.stopPropagation(); App.toggleLooperTrackSolo(2)" title="Solo Track 3">S</button>
+            </div>
+            <div class="loop-track" id="loop-track-3" onclick="App.toggleLooperTrackMute(3)">
+                <span class="track-number">4</span>
+                <span class="track-label">Empty</span>
+                <div class="track-progress-fill" id="track-progress-3"></div>
+                <button class="track-mute-btn" id="track-mute-3" onclick="event.stopPropagation(); App.toggleLooperTrackMute(3)" title="Mute Track 4">M</button>
+                <button class="track-solo-btn" id="track-solo-3" onclick="event.stopPropagation(); App.toggleLooperTrackSolo(3)" title="Solo Track 4">S</button>
+            </div>
+            <div class="loop-track" id="loop-track-4" onclick="App.toggleLooperTrackMute(4)">
+                <span class="track-number">5</span>
+                <span class="track-label">Empty</span>
+                <div class="track-progress-fill" id="track-progress-4"></div>
+                <button class="track-mute-btn" id="track-mute-4" onclick="event.stopPropagation(); App.toggleLooperTrackMute(4)" title="Mute Track 5">M</button>
+                <button class="track-solo-btn" id="track-solo-4" onclick="event.stopPropagation(); App.toggleLooperTrackSolo(4)" title="Solo Track 5">S</button>
+            </div>
+            <div class="loop-track" id="loop-track-5" onclick="App.toggleLooperTrackMute(5)">
+                <span class="track-number">6</span>
+                <span class="track-label">Empty</span>
+                <div class="track-progress-fill" id="track-progress-5"></div>
+                <button class="track-mute-btn" id="track-mute-5" onclick="event.stopPropagation(); App.toggleLooperTrackMute(5)" title="Mute Track 6">M</button>
+                <button class="track-solo-btn" id="track-solo-5" onclick="event.stopPropagation(); App.toggleLooperTrackSolo(5)" title="Solo Track 6">S</button>
+            </div>
         </div>
     </footer>
 </div>
@@ -350,6 +543,8 @@
         buildKeySelector();
         buildInstrumentGrid();
         buildModeGrid();
+        setupControllerInteraction();
+        restoreLayout();
     }
 
     // ── Piano Keys ───────────────────────────────────────────
@@ -414,6 +609,107 @@
     function selectMode(index) {
         App.setMode(index);
         buildModeGrid();
+    }
+
+    // ── Layout Toggle ─────────────────────────────────────────
+    function switchLayout(layout) {
+        const keyboardView = document.getElementById('layout-keyboard');
+        const controllerView = document.getElementById('layout-controller');
+        const btnKb = document.getElementById('layout-btn-keyboard');
+        const btnCtrl = document.getElementById('layout-btn-controller');
+
+        if (layout === 'controller') {
+            keyboardView.classList.remove('active');
+            controllerView.classList.add('active');
+            btnKb.classList.remove('active');
+            btnCtrl.classList.add('active');
+        } else {
+            controllerView.classList.remove('active');
+            keyboardView.classList.add('active');
+            btnCtrl.classList.remove('active');
+            btnKb.classList.add('active');
+        }
+
+        // Persist preference
+        try { localStorage.setItem('khord_layout', layout); } catch(e) {}
+    }
+
+    // Restore saved layout preference
+    function restoreLayout() {
+        try {
+            const saved = localStorage.getItem('khord_layout');
+            if (saved === 'controller') switchLayout('controller');
+        } catch(e) {}
+    }
+
+    // ── Controller SVG Interactivity ────────────────────────
+    function setupControllerInteraction() {
+        const svg = document.getElementById('controller-svg');
+        if (!svg) return;
+
+        // Make all ctrl-btn-group elements interactive
+        svg.querySelectorAll('.ctrl-btn-group').forEach(group => {
+            const func = group.getAttribute('data-func');
+            if (!func) return;
+
+            group.style.cursor = 'pointer';
+
+            group.addEventListener('mousedown', (e) => {
+                e.preventDefault();
+                group.classList.add('active');
+                // Fire press through the same path as virtual input
+                if (func.startsWith('chord')) {
+                    const idx = parseInt(func.replace('chord', '')) - 1;
+                    App.pressChord(idx);
+                } else {
+                    InputManager.virtualPress(func);
+                }
+            });
+
+            group.addEventListener('mouseup', (e) => {
+                group.classList.remove('active');
+                if (func.startsWith('chord')) {
+                    const idx = parseInt(func.replace('chord', '')) - 1;
+                    App.releaseChord(idx);
+                } else {
+                    InputManager.virtualRelease(func);
+                }
+            });
+
+            group.addEventListener('mouseleave', (e) => {
+                if (group.classList.contains('active')) {
+                    group.classList.remove('active');
+                    if (func.startsWith('chord')) {
+                        const idx = parseInt(func.replace('chord', '')) - 1;
+                        App.releaseChord(idx);
+                    } else {
+                        InputManager.virtualRelease(func);
+                    }
+                }
+            });
+
+            // Touch support
+            group.addEventListener('touchstart', (e) => {
+                e.preventDefault();
+                group.classList.add('active');
+                if (func.startsWith('chord')) {
+                    const idx = parseInt(func.replace('chord', '')) - 1;
+                    App.pressChord(idx);
+                } else {
+                    InputManager.virtualPress(func);
+                }
+            });
+
+            group.addEventListener('touchend', (e) => {
+                group.classList.remove('active');
+                if (func.startsWith('chord')) {
+                    const idx = parseInt(func.replace('chord', '')) - 1;
+                    App.releaseChord(idx);
+                } else {
+                    InputManager.virtualRelease(func);
+                }
+            });
+        });
     }
 
     // ── Helpers for UI buttons ───────────────────────────────

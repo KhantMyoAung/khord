@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Khord — Thinking Out Loud (Ed Sheeran)</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #0a0a0f;
+            --bg-card: rgba(20, 20, 30, 0.7);
+            --cyan: #00f0ff;
+            --cyan-glow: rgba(0, 240, 255, 0.3);
+            --cyan-subtle: rgba(0, 240, 255, 0.08);
+            --purple: #a855f7;
+            --green: #34d399;
+            --yellow: #fbbf24;
+            --red: #ef4444;
+            --text: #f0f0f5;
+            --text-dim: #8888a0;
+            --text-muted: #555570;
+            --border: rgba(255,255,255,0.06);
+        }
+        *, *::before, *::after { margin:0; padding:0; box-sizing:border-box; }
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+            padding: 32px 24px 60px;
+            line-height: 1.6;
+        }
+        body::before {
+            content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+            background: radial-gradient(ellipse at 20% 0%, rgba(0,240,255,0.05) 0%, transparent 50%),
+                        radial-gradient(ellipse at 80% 100%, rgba(168,85,247,0.04) 0%, transparent 50%);
+        }
+        .container { max-width: 800px; margin: 0 auto; position: relative; z-index:1; }
+
+        /* Header */
+        .song-header { text-align: center; margin-bottom: 36px; }
+        .song-header .badge {
+            display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 0.65rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 1.5px;
+            background: var(--cyan-subtle); color: var(--cyan); border: 1px solid rgba(0,240,255,0.2);
+            margin-bottom: 12px;
+        }
+        .song-title {
+            font-size: 2.2rem; font-weight: 900; letter-spacing: -1px;
+            background: linear-gradient(135deg, var(--cyan), var(--purple));
+            -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
+        }
+        .song-artist { font-size: 1rem; color: var(--text-dim); font-weight: 400; margin-top: 4px; }
+        .song-meta {
+            display: flex; justify-content: center; gap: 16px; margin-top: 16px; flex-wrap: wrap;
+        }
+        .meta-chip {
+            padding: 6px 16px; border-radius: 20px; font-size: 0.75rem; font-weight: 600;
+            background: var(--bg-card); border: 1px solid var(--border);
+        }
+        .meta-chip span { color: var(--cyan); font-family: 'JetBrains Mono', monospace; }
+
+        /* Setup box */
+        .setup-box {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px 24px; margin-bottom: 28px; backdrop-filter: blur(10px);
+        }
+        .setup-box h3 {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px; color: var(--text-muted);
+            margin-bottom: 12px; font-weight: 700;
+        }
+        .setup-steps {
+            display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 10px;
+        }
+        .setup-step {
+            display: flex; align-items: center; gap: 10px; font-size: 0.8rem; color: var(--text-dim);
+        }
+        .step-num {
+            width: 24px; height: 24px; border-radius: 50%; display: flex; align-items: center;
+            justify-content: center; font-size: 0.65rem; font-weight: 800; flex-shrink: 0;
+            background: var(--cyan-subtle); color: var(--cyan); border: 1px solid rgba(0,240,255,0.2);
+        }
+
+        /* Chord reference */
+        .chord-ref {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px 24px; margin-bottom: 28px;
+        }
+        .chord-ref h3 {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); margin-bottom: 14px; font-weight: 700;
+        }
+        .chord-ref-grid {
+            display: flex; gap: 8px; flex-wrap: wrap; justify-content: center;
+        }
+        .chord-ref-item {
+            text-align: center; padding: 10px 12px; border-radius: 10px; min-width: 80px;
+            background: rgba(255,255,255,0.02); border: 1px solid var(--border);
+            transition: all 0.2s;
+        }
+        .chord-ref-item:hover {
+            border-color: var(--cyan); background: var(--cyan-subtle);
+        }
+        .chord-ref-item.used {
+            border-color: rgba(0,240,255,0.2); background: rgba(0,240,255,0.04);
+        }
+        .cri-key {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.65rem; font-weight: 600;
+            color: var(--text-muted); background: rgba(255,255,255,0.04); padding: 2px 8px;
+            border-radius: 4px; display: inline-block; margin-bottom: 4px;
+        }
+        .cri-chord { font-size: 1.1rem; font-weight: 800; color: var(--text); }
+        .cri-num { font-size: 0.6rem; color: var(--text-muted); font-family: 'JetBrains Mono', monospace; }
+        .cri-gp { font-size: 0.55rem; color: var(--purple); margin-top: 2px; }
+
+        /* Song sections */
+        .section {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px 24px; margin-bottom: 16px; backdrop-filter: blur(10px);
+        }
+        .section-label {
+            display: inline-block; padding: 3px 12px; border-radius: 6px; font-size: 0.65rem;
+            font-weight: 700; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 14px;
+        }
+        .section-label.verse { background: rgba(0,240,255,0.08); color: var(--cyan); }
+        .section-label.prechorus { background: rgba(168,85,247,0.1); color: var(--purple); }
+        .section-label.chorus { background: rgba(52,211,153,0.1); color: var(--green); }
+        .section-label.outro { background: rgba(251,191,36,0.1); color: var(--yellow); }
+
+        /* Chord lines */
+        .chord-line {
+            display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 8px; align-items: center;
+        }
+        .chord-line .lyric-hint {
+            width: 100%; font-size: 0.7rem; color: var(--text-muted); font-style: italic;
+            margin-bottom: 2px; margin-top: -2px;
+        }
+        .chord-pill {
+            display: inline-flex; align-items: center; gap: 6px; padding: 6px 14px;
+            border-radius: 8px; font-weight: 700; font-size: 0.85rem;
+            background: rgba(255,255,255,0.03); border: 1px solid var(--border);
+            transition: all 0.2s; cursor: default;
+        }
+        .chord-pill:hover { border-color: var(--cyan); background: var(--cyan-subtle); }
+        .chord-pill .cp-name { color: var(--text); }
+        .chord-pill .cp-key {
+            font-family: 'JetBrains Mono', monospace; font-size: 0.6rem; font-weight: 600;
+            color: var(--cyan); background: rgba(0,240,255,0.1); padding: 2px 6px; border-radius: 4px;
+        }
+        .chord-pill .cp-hold {
+            font-size: 0.55rem; color: var(--text-muted);
+        }
+        .bar-sep {
+            color: var(--text-muted); font-size: 1.2rem; font-weight: 300; padding: 0 2px;
+        }
+        .repeat-mark {
+            font-size: 0.7rem; color: var(--purple); font-weight: 600; padding: 4px 10px;
+            border-radius: 6px; background: rgba(168,85,247,0.08); border: 1px solid rgba(168,85,247,0.15);
+        }
+
+        /* Tips */
+        .tips {
+            background: var(--bg-card); border: 1px solid var(--border); border-radius: 16px;
+            padding: 20px 24px; margin-top: 28px;
+        }
+        .tips h3 {
+            font-size: 0.7rem; text-transform: uppercase; letter-spacing: 1px;
+            color: var(--text-muted); margin-bottom: 10px; font-weight: 700;
+        }
+        .tips ul { list-style: none; }
+        .tips li {
+            font-size: 0.8rem; color: var(--text-dim); padding: 4px 0;
+            display: flex; align-items: flex-start; gap: 8px;
+        }
+        .tips li::before { content: '💡'; flex-shrink: 0; }
+
+        .back-link {
+            display: inline-flex; align-items: center; gap: 6px; color: var(--cyan);
+            text-decoration: none; font-size: 0.8rem; font-weight: 600; margin-bottom: 20px;
+            opacity: 0.7; transition: opacity 0.2s;
+        }
+        .back-link:hover { opacity: 1; }
+
+        @media (max-width: 600px) {
+            .song-title { font-size: 1.6rem; }
+            .chord-ref-grid { gap: 6px; }
+            .chord-ref-item { min-width: 65px; padding: 8px; }
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <a class="back-link" href="index.html">← Back to Music Sheets</a>
+
+    <!-- Header -->
+    <div class="song-header">
+        <div class="badge">Khord Song Sheet</div>
+        <h1 class="song-title">Thinking Out Loud</h1>
+        <p class="song-artist">Ed Sheeran</p>
+        <div class="song-meta">
+            <div class="meta-chip">Key: <span>D</span></div>
+            <div class="meta-chip">BPM: <span>79</span></div>
+            <div class="meta-chip">Time: <span>4/4</span></div>
+            <div class="meta-chip">Difficulty: <span>Easy</span></div>
+        </div>
+    </div>
+
+    <!-- Setup -->
+    <div class="setup-box">
+        <h3>⚙️ Khord Setup</h3>
+        <div class="setup-steps">
+            <div class="setup-step">
+                <span class="step-num">1</span> Set Key to <strong style="color:var(--cyan);margin-left:4px">D</strong>
+            </div>
+            <div class="setup-step">
+                <span class="step-num">2</span> Set Octave to <strong style="color:var(--cyan);margin-left:4px">4</strong>
+            </div>
+            <div class="setup-step">
+                <span class="step-num">3</span> Choose instrument: <strong style="color:var(--cyan);margin-left:4px">Piano or Guitar</strong>
+            </div>
+            <div class="setup-step">
+                <span class="step-num">4</span> Set BPM to <strong style="color:var(--cyan);margin-left:4px">79</strong>
+            </div>
+        </div>
+    </div>
+
+    <!-- Chord Reference -->
+    <div class="chord-ref">
+        <h3>🎹 Button → Chord Map (Key of D)</h3>
+        <div class="chord-ref-grid">
+            <div class="chord-ref-item used">
+                <div class="cri-key">A</div>
+                <div class="cri-chord">D</div>
+                <div class="cri-num">I</div>
+                <div class="cri-gp">🎮 A</div>
+            </div>
+            <div class="chord-ref-item used">
+                <div class="cri-key">S</div>
+                <div class="cri-chord">Em</div>
+                <div class="cri-num">ii</div>
+                <div class="cri-gp">🎮 B</div>
+            </div>
+            <div class="chord-ref-item">
+                <div class="cri-key">D</div>
+                <div class="cri-chord">F#m</div>
+                <div class="cri-num">iii</div>
+                <div class="cri-gp">🎮 X</div>
+            </div>
+            <div class="chord-ref-item used">
+                <div class="cri-key">F</div>
+                <div class="cri-chord">G</div>
+                <div class="cri-num">IV</div>
+                <div class="cri-gp">🎮 Y</div>
+            </div>
+            <div class="chord-ref-item used">
+                <div class="cri-key">G</div>
+                <div class="cri-chord">A</div>
+                <div class="cri-num">V</div>
+                <div class="cri-gp">🎮 LB</div>
+            </div>
+            <div class="chord-ref-item used">
+                <div class="cri-key">H</div>
+                <div class="cri-chord">Bm</div>
+                <div class="cri-num">vi</div>
+                <div class="cri-gp">🎮 RB</div>
+            </div>
+            <div class="chord-ref-item">
+                <div class="cri-key">J</div>
+                <div class="cri-chord">C#dim</div>
+                <div class="cri-num">vii°</div>
+                <div class="cri-gp">🎮 LT</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ═══ VERSE ═══ -->
+    <div class="section">
+        <div class="section-label verse">Verse</div>
+        <div class="chord-line">
+            <span class="lyric-hint">"When your legs don't work like they used to before..."</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">F</span><span class="cp-name">G</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">2 beats</span></span>
+        </div>
+        <div class="chord-line">
+            <span class="lyric-hint">"And I can't sweep you off of your feet..."</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">F</span><span class="cp-name">G</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">2 beats</span></span>
+        </div>
+        <div class="chord-line">
+            <span class="repeat-mark">↻ Repeat pattern for each verse line</span>
+        </div>
+    </div>
+
+    <!-- ═══ PRE-CHORUS ═══ -->
+    <div class="section">
+        <div class="section-label prechorus">Pre-Chorus</div>
+        <div class="chord-line">
+            <span class="lyric-hint">"So honey now..."</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">S</span><span class="cp-name">Em</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">4 beats</span></span>
+        </div>
+        <div class="chord-line">
+            <span class="lyric-hint">"Take me into your loving arms..."</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">S</span><span class="cp-name">Em</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">4 beats</span></span>
+        </div>
+    </div>
+
+    <!-- ═══ CHORUS ═══ -->
+    <div class="section">
+        <div class="section-label chorus">Chorus</div>
+        <div class="chord-line">
+            <span class="lyric-hint">"'Cause honey your soul could never grow old..."</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">F</span><span class="cp-name">G</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">H</span><span class="cp-name">Bm</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">4 beats</span></span>
+        </div>
+        <div class="chord-line">
+            <span class="lyric-hint">"And darling I will be loving you 'til we're 70..."</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">F</span><span class="cp-name">G</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">H</span><span class="cp-name">Bm</span><span class="cp-hold">4 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">4 beats</span></span>
+        </div>
+    </div>
+
+    <!-- ═══ CHORUS END ═══ -->
+    <div class="section">
+        <div class="section-label chorus">Chorus End</div>
+        <div class="chord-line">
+            <span class="lyric-hint">"...I'm thinking out loud..."</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">F</span><span class="cp-name">G</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">2 beats</span></span>
+        </div>
+        <div class="chord-line">
+            <span class="lyric-hint">"...maybe we found love right where we are"</span>
+        </div>
+        <div class="chord-line">
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">A</span><span class="cp-name">D</span><span class="cp-hold">2 beats</span></span>
+            <span class="bar-sep">|</span>
+            <span class="chord-pill"><span class="cp-key">F</span><span class="cp-name">G</span><span class="cp-hold">2 beats</span></span>
+            <span class="chord-pill"><span class="cp-key">G</span><span class="cp-name">A</span><span class="cp-hold">2 beats</span></span>
+        </div>
+    </div>
+
+    <!-- ═══ FULL STRUCTURE ═══ -->
+    <div class="section">
+        <div class="section-label outro">Full Song Structure</div>
+        <div style="font-size:0.8rem; color:var(--text-dim); line-height:2;">
+            <strong style="color:var(--cyan)">Verse 1</strong> → D G A × 4 lines &nbsp;→&nbsp;
+            <strong style="color:var(--purple)">Pre-Chorus</strong> → Em A D × 2 &nbsp;→&nbsp;
+            <strong style="color:var(--green)">Chorus</strong> → G A Bm A × 2 + D G A<br>
+            <strong style="color:var(--cyan)">Verse 2</strong> → (same as Verse 1) &nbsp;→&nbsp;
+            <strong style="color:var(--purple)">Pre-Chorus</strong> &nbsp;→&nbsp;
+            <strong style="color:var(--green)">Chorus</strong> &nbsp;→&nbsp;
+            <strong style="color:var(--yellow)">Outro</strong> → D G A (fade)
+        </div>
+    </div>
+
+    <!-- Tips -->
+    <div class="tips">
+        <h3>🎯 Performance Tips</h3>
+        <ul>
+            <li>The whole song only uses <strong>5 buttons</strong>: A, S, F, G, H</li>
+            <li>The verse is just <strong>A → F → G</strong> repeated (D → G → A)</li>
+            <li>Try holding <strong>↓ (joystick down / arrow down)</strong> to add Sus4 for a dreamy sound</li>
+            <li>Use <strong>→ (joystick right)</strong> on the Em (S key) for a jazzy Em7</li>
+            <li>Set to <strong>Strum mode</strong> for a more guitar-like feel</li>
+            <li>Try recording the verse pattern in the <strong>Looper</strong> then play the chorus live on top!</li>
+        </ul>
+    </div>
+
+</div>
+</body>
+</html>

@@ -223,6 +223,30 @@ body::before {
     background-clip: text;
 }
 
+.music-sheets-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 5px 14px;
+    border-radius: var(--radius-xl);
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-decoration: none;
+    color: var(--purple);
+    background: rgba(168, 85, 247, 0.08);
+    border: 1px solid rgba(168, 85, 247, 0.2);
+    transition: all var(--transition-fast);
+    white-space: nowrap;
+}
+
+.music-sheets-btn:hover {
+    background: rgba(168, 85, 247, 0.15);
+    border-color: rgba(168, 85, 247, 0.4);
+    box-shadow: 0 0 16px rgba(168, 85, 247, 0.15);
+    color: #c084fc;
+    transform: translateY(-1px);
+}
+
 .top-bar-center {
     display: flex;
     align-items: center;
@@ -856,16 +880,39 @@ body::before {
     background: var(--bg-glass);
     backdrop-filter: blur(20px);
     border-top: 1px solid var(--border);
-    padding: 12px 24px;
+    padding: 10px 24px;
     display: flex;
     align-items: center;
     gap: var(--gap-md);
 }
 
+.looper-header {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 2px;
+    min-width: 60px;
+}
+
+.looper-title {
+    font-size: 0.6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    color: var(--text-tertiary);
+}
+
+.looper-time {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: var(--cyan);
+}
+
 .looper-controls {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
 }
 
 .loop-btn {
@@ -895,32 +942,64 @@ body::before {
     animation: recPulse 1s infinite;
 }
 
+.loop-btn.playing {
+    background: rgba(52, 211, 153, 0.15);
+    border-color: var(--green);
+    color: var(--green);
+    box-shadow: 0 0 12px var(--green-glow);
+}
+
 @keyframes recPulse {
     0%, 100% { box-shadow: 0 0 0px transparent; }
     50% { box-shadow: 0 0 15px var(--red-glow); }
 }
 
+/* ── Looper Progress Bar ──────────────────────────────────── */
+.looper-progress-bar {
+    width: 100px;
+    height: 4px;
+    background: rgba(255, 255, 255, 0.06);
+    border-radius: 2px;
+    overflow: hidden;
+    flex-shrink: 0;
+}
+
+.looper-progress-fill {
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, var(--cyan), var(--purple));
+    border-radius: 2px;
+    transition: width 50ms linear;
+    box-shadow: 0 0 6px var(--cyan-glow);
+}
+
+/* ── Looper Tracks ────────────────────────────────────────── */
 .looper-tracks {
     display: flex;
-    gap: 6px;
+    gap: 5px;
     flex: 1;
 }
 
 .loop-track {
     flex: 1;
-    height: 40px;
+    height: 44px;
     border-radius: var(--radius-sm);
     background: rgba(255, 255, 255, 0.03);
     border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 0.65rem;
+    font-size: 0.6rem;
     color: var(--text-tertiary);
     cursor: pointer;
     transition: all var(--transition-fast);
     position: relative;
     overflow: hidden;
+    gap: 4px;
+}
+
+.loop-track:hover {
+    border-color: var(--border-hover);
 }
 
 .loop-track.recorded {
@@ -942,13 +1021,40 @@ body::before {
     animation: blink 0.6s infinite;
 }
 
+.loop-track.playing-track {
+    border-color: var(--green);
+    box-shadow: inset 0 0 8px rgba(52, 211, 153, 0.1);
+}
+
+.loop-track.muted {
+    opacity: 0.35;
+}
+
+.loop-track.muted .track-label {
+    text-decoration: line-through;
+}
+
+.loop-track.soloed {
+    border-color: var(--yellow) !important;
+    box-shadow: 0 0 8px rgba(251, 191, 36, 0.15);
+}
+
 @keyframes blink {
     0%, 100% { opacity: 1; }
     50% { opacity: 0.3; }
 }
 
-.loop-track.muted {
-    opacity: 0.35;
+/* Track progress fill (playback indicator per track) */
+.track-progress-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: linear-gradient(90deg, rgba(0, 240, 255, 0.08), rgba(168, 85, 247, 0.06));
+    pointer-events: none;
+    transition: width 50ms linear;
+    z-index: 0;
 }
 
 .track-number {
@@ -958,6 +1064,75 @@ body::before {
     font-size: 0.5rem;
     font-family: 'JetBrains Mono', monospace;
     color: var(--text-tertiary);
+    z-index: 1;
+}
+
+.track-label {
+    z-index: 1;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.55rem;
+    font-weight: 500;
+}
+
+/* ── Per-Track Mute/Solo Buttons ─────────────────────────── */
+.track-mute-btn,
+.track-solo-btn {
+    position: absolute;
+    bottom: 3px;
+    width: 16px;
+    height: 14px;
+    border-radius: 3px;
+    border: 1px solid var(--border);
+    background: rgba(0, 0, 0, 0.3);
+    color: var(--text-tertiary);
+    font-size: 0.45rem;
+    font-weight: 700;
+    font-family: 'JetBrains Mono', monospace;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all var(--transition-fast);
+    z-index: 2;
+    opacity: 0;
+    padding: 0;
+}
+
+.loop-track:hover .track-mute-btn,
+.loop-track:hover .track-solo-btn,
+.track-mute-btn.active,
+.track-solo-btn.active {
+    opacity: 1;
+}
+
+.track-mute-btn {
+    right: 20px;
+}
+
+.track-solo-btn {
+    right: 3px;
+}
+
+.track-mute-btn:hover {
+    border-color: var(--red);
+    color: var(--red);
+}
+
+.track-solo-btn:hover {
+    border-color: var(--yellow);
+    color: var(--yellow);
+}
+
+.track-mute-btn.active {
+    background: rgba(239, 68, 68, 0.2);
+    border-color: var(--red);
+    color: var(--red);
+}
+
+.track-solo-btn.active {
+    background: rgba(251, 191, 36, 0.2);
+    border-color: var(--yellow);
+    color: var(--yellow);
 }
 
 /* ── Mapping Panel (Overlay) ────────────────────────────────── */
@@ -1287,6 +1462,291 @@ body::before {
     color: var(--cyan);
 }
 
+/* ── Layout Toggle ──────────────────────────────────────────── */
+.layout-toggle-bar {
+    display: flex;
+    gap: 4px;
+    justify-content: center;
+    margin-bottom: var(--gap-md);
+    background: var(--bg-glass);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-xl);
+    padding: 4px;
+    width: fit-content;
+    margin-left: auto;
+    margin-right: auto;
+}
+
+.layout-toggle-btn {
+    padding: 8px 20px;
+    border: none;
+    border-radius: calc(var(--radius-xl) - 4px);
+    background: transparent;
+    color: var(--text-tertiary);
+    font-size: 0.8rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    letter-spacing: 0.3px;
+    white-space: nowrap;
+}
+
+.layout-toggle-btn:hover {
+    color: var(--text-secondary);
+    background: var(--bg-glass-hover);
+}
+
+.layout-toggle-btn.active {
+    background: linear-gradient(135deg, rgba(0, 240, 255, 0.15), rgba(168, 85, 247, 0.1));
+    color: var(--cyan);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.1);
+    border: 1px solid var(--border-accent);
+}
+
+/* ── Layout Views ───────────────────────────────────────────── */
+.layout-view {
+    display: none;
+}
+
+.layout-view.active {
+    display: block;
+    animation: layoutFadeIn 0.3s ease;
+}
+
+@keyframes layoutFadeIn {
+    from { opacity: 0; transform: translateY(8px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Controller SVG ─────────────────────────────────────────── */
+.controller-svg-wrap {
+    display: flex;
+    justify-content: center;
+    padding: 16px 8px 8px;
+}
+
+#controller-svg {
+    width: 100%;
+    max-width: 600px;
+    height: auto;
+}
+
+/* Body shape */
+.ctrl-body {
+    fill: rgba(30, 30, 45, 0.6);
+    stroke: rgba(255, 255, 255, 0.08);
+    stroke-width: 2;
+    filter: drop-shadow(0 4px 20px rgba(0, 0, 0, 0.3));
+}
+
+.ctrl-grip {
+    fill: rgba(25, 25, 38, 0.5);
+    stroke: rgba(255, 255, 255, 0.05);
+    stroke-width: 1.5;
+}
+
+/* Triggers */
+.ctrl-trigger {
+    fill: rgba(40, 40, 60, 0.8);
+    stroke: rgba(255, 255, 255, 0.12);
+    stroke-width: 1.5;
+    transition: all var(--transition-fast);
+}
+
+.ctrl-btn-group:hover .ctrl-trigger,
+.ctrl-btn-group.active .ctrl-trigger {
+    stroke: var(--cyan);
+    fill: rgba(0, 240, 255, 0.12);
+    filter: drop-shadow(0 0 8px var(--cyan-glow));
+}
+
+/* Bumpers */
+.ctrl-bumper {
+    fill: rgba(40, 40, 60, 0.8);
+    stroke: rgba(255, 255, 255, 0.12);
+    stroke-width: 1.5;
+    transition: all var(--transition-fast);
+}
+
+.ctrl-btn-group:hover .ctrl-bumper,
+.ctrl-btn-group.active .ctrl-bumper {
+    stroke: var(--cyan);
+    fill: rgba(0, 240, 255, 0.12);
+    filter: drop-shadow(0 0 8px var(--cyan-glow));
+}
+
+/* Face buttons */
+.ctrl-face-btn {
+    fill: rgba(40, 40, 60, 0.8);
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 2;
+    transition: all var(--transition-fast);
+}
+
+.ctrl-face-a { stroke: var(--green); fill: rgba(52, 211, 153, 0.08); }
+.ctrl-face-b { stroke: var(--red); fill: rgba(239, 68, 68, 0.08); }
+.ctrl-face-x { stroke: #4488ff; fill: rgba(68, 136, 255, 0.08); }
+.ctrl-face-y { stroke: var(--yellow); fill: rgba(251, 191, 36, 0.08); }
+
+.ctrl-btn-group:hover .ctrl-face-a,
+.ctrl-btn-group.active .ctrl-face-a {
+    fill: rgba(52, 211, 153, 0.25);
+    filter: drop-shadow(0 0 12px var(--green-glow));
+}
+.ctrl-btn-group:hover .ctrl-face-b,
+.ctrl-btn-group.active .ctrl-face-b {
+    fill: rgba(239, 68, 68, 0.25);
+    filter: drop-shadow(0 0 12px var(--red-glow));
+}
+.ctrl-btn-group:hover .ctrl-face-x,
+.ctrl-btn-group.active .ctrl-face-x {
+    fill: rgba(68, 136, 255, 0.25);
+    filter: drop-shadow(0 0 12px rgba(68, 136, 255, 0.3));
+}
+.ctrl-btn-group:hover .ctrl-face-y,
+.ctrl-btn-group.active .ctrl-face-y {
+    fill: rgba(251, 191, 36, 0.25);
+    filter: drop-shadow(0 0 12px rgba(251, 191, 36, 0.3));
+}
+
+/* Center buttons (select/start) */
+.ctrl-center-btn {
+    fill: rgba(50, 50, 70, 0.8);
+    stroke: rgba(255, 255, 255, 0.15);
+    stroke-width: 1.5;
+    transition: all var(--transition-fast);
+}
+
+.ctrl-btn-group:hover .ctrl-center-btn,
+.ctrl-btn-group.active .ctrl-center-btn {
+    fill: rgba(0, 240, 255, 0.15);
+    stroke: var(--cyan);
+    filter: drop-shadow(0 0 6px var(--cyan-glow));
+}
+
+/* D-Pad */
+.ctrl-dpad-bg {
+    fill: rgba(20, 20, 30, 0.7);
+    stroke: rgba(255, 255, 255, 0.06);
+    stroke-width: 1.5;
+}
+
+.ctrl-dpad-btn {
+    fill: rgba(50, 50, 70, 0.8);
+    stroke: rgba(255, 255, 255, 0.1);
+    stroke-width: 1;
+    transition: all var(--transition-fast);
+}
+
+.ctrl-dpad-center {
+    fill: rgba(30, 30, 45, 0.9);
+    stroke: none;
+}
+
+.ctrl-btn-group:hover .ctrl-dpad-btn,
+.ctrl-btn-group.active .ctrl-dpad-btn {
+    fill: rgba(52, 211, 153, 0.2);
+    stroke: var(--green);
+    filter: drop-shadow(0 0 6px var(--green-glow));
+}
+
+/* Analog sticks */
+.ctrl-stick-bg {
+    fill: rgba(20, 20, 30, 0.8);
+    stroke: rgba(255, 255, 255, 0.06);
+    stroke-width: 1.5;
+}
+
+.ctrl-stick-knob {
+    fill: radial-gradient(circle at 35% 35%, #3a3a50, #222233);
+    fill: rgba(50, 50, 65, 0.9);
+    stroke: rgba(255, 255, 255, 0.12);
+    stroke-width: 2;
+    transition: all 0.1s ease-out;
+}
+
+.ctrl-stick-knob:hover {
+    stroke: var(--purple);
+    filter: drop-shadow(0 0 8px var(--purple-glow));
+}
+
+/* Active state animation for controller button groups */
+.ctrl-btn-group {
+    transition: transform var(--transition-fast);
+}
+
+.ctrl-btn-group.active {
+    animation: ctrlBtnPulse 0.25s ease-out;
+}
+
+@keyframes ctrlBtnPulse {
+    0%   { transform: scale(1); }
+    40%  { transform: scale(0.92); }
+    100% { transform: scale(1); }
+}
+
+/* Labels */
+.ctrl-label {
+    fill: rgba(255, 255, 255, 0.7);
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 700;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.ctrl-label-sm {
+    fill: rgba(255, 255, 255, 0.5);
+    font-size: 11px;
+    font-family: 'Inter', sans-serif;
+    font-weight: 600;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.ctrl-label-xs {
+    fill: rgba(255, 255, 255, 0.4);
+    font-size: 10px;
+    text-anchor: middle;
+    pointer-events: none;
+}
+
+.ctrl-bind-label {
+    fill: var(--cyan);
+    font-size: 9px;
+    font-family: 'JetBrains Mono', monospace;
+    font-weight: 600;
+    text-anchor: middle;
+    opacity: 0.8;
+    pointer-events: none;
+}
+
+/* Controller Legend */
+.controller-legend {
+    display: flex;
+    justify-content: center;
+    gap: 20px;
+    padding: 10px 16px;
+    margin-top: 4px;
+    flex-wrap: wrap;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 0.65rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+}
+
+.legend-color {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    flex-shrink: 0;
+}
+
 /* ── Scrollbar ──────────────────────────────────────────────── */
 ::-webkit-scrollbar {
     width: 6px;
@@ -1341,4 +1801,12 @@ body::before {
     .mapping-row {
         grid-template-columns: 1fr 80px 80px;
     }
+    .layout-toggle-btn {
+        padding: 6px 14px;
+        font-size: 0.7rem;
+    }
+    .controller-legend {
+        gap: 12px;
+    }
 }
+

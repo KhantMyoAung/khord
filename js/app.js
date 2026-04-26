@@ -77,6 +77,9 @@ const App = (() => {
 
         // Handle function buttons and other actions
         if (action === 'press') {
+            // Flash the corresponding controller SVG button
+            flashControllerButton(func);
+
             switch (func) {
                 case 'joystickClick':
                     handleJoystickClick();
@@ -92,6 +95,9 @@ const App = (() => {
                     break;
                 case 'looperToggle':
                     toggleLooper();
+                    break;
+                case 'looperPlayback':
+                    toggleLooperPlayback();
                     break;
                 case 'octaveUp':
                     ChordEngine.shiftOctave(1);
@@ -162,9 +168,22 @@ const App = (() => {
         const result = Modes.handleChordPress(buttonIndex, currentJoystickDir);
         lastPlayedChord = result?.chord || null;
 
-        // If recording, capture event
-        if (Looper.isRecording()) {
-            Looper.recordNoteEvent('press', result?.chord?.notes, Tone.now());
+        // If recording, capture rich event data for looper playback
+        if (Looper.isRecording() && result) {
+            const mode = result.mode || 'play';
+            if (mode === 'drum') {
+                Looper.recordNoteEvent('drum', { drumKey: result.drum?.key }, Tone.now());
+            } else if (mode === 'strum') {
+                Looper.recordNoteEvent('strum', {
+                    notes: result.chord?.notes,
+                    strumSpeed: result.speed || 50
+                }, Tone.now());
+            } else if (result.chord?.notes) {
+                Looper.recordNoteEvent('press', {
+                    notes: result.chord.notes,
+                    velocity: 0.7
+                }, Tone.now());
+            }
         }
 
         updateChordDisplay(result);
@@ -173,10 +192,13 @@ const App = (() => {
 
     function handleChordRelease(buttonIndex) {
         activeChordButtons.delete(buttonIndex);
-        Modes.handleChordRelease(buttonIndex);
+        const prevNotes = Modes.handleChordRelease(buttonIndex);
 
         if (Looper.isRecording()) {
-            Looper.recordNoteEvent('release', null, Tone.now());
+            // Record release with the notes that were playing
+            Looper.recordNoteEvent('release', {
+                notes: lastPlayedChord?.notes || null
+            }, Tone.now());
         }
 
         highlightButton(buttonIndex, false);
@@ -218,9 +240,38 @@ const App = (() => {
         const result = Looper.toggleRecord();
         if (result.action === 'start') {
             showNotification(`⏺ Recording Track ${result.track + 1}`, 'record');
+            // Update record button visual
+            const recBtn = document.getElementById('loop-rec-btn');
+            if (recBtn) recBtn.classList.add('recording');
         } else {
             showNotification(`⏹ Recorded ${result.duration?.toFixed(1)}s (${result.events} events)`, 'success');
+            const recBtn = document.getElementById('loop-rec-btn');
+            if (recBtn) recBtn.classList.remove('recording');
         }
+        updateLooperUI();
+    }
+
+    function toggleLooperPlayback() {
+        const result = Looper.togglePlayback();
+        if (result.playing) {
+            showNotification(`▶ Playing ${result.trackCount} track${result.trackCount > 1 ? 's' : ''}`, 'success');
+        } else {
+            showNotification('⏹ Playback stopped', 'info');
+        }
+        updateLooperUI();
+    }
+
+    function toggleLooperTrackMute(index) {
+        const muted = Looper.muteTrack(index);
+        showNotification(`Track ${index + 1}: ${muted ? 'Muted' : 'Unmuted'}`, 'info');
+        if (Looper.isPlaying()) Looper.reschedule();
+        updateLooperUI();
+    }
+
+    function toggleLooperTrackSolo(index) {
+        const soloed = Looper.soloTrack(index);
+        showNotification(`Track ${index + 1}: ${soloed ? 'Solo ON' : 'Solo OFF'}`, 'info');
+        if (Looper.isPlaying()) Looper.reschedule();
         updateLooperUI();
     }
 
@@ -321,6 +372,7 @@ const App = (() => {
     }
 
     function highlightButton(index, active) {
+        // Keyboard layout button
         const btn = document.getElementById(`chord-btn-${index}`);
         if (btn) {
             btn.classList.toggle('active', active);
@@ -328,6 +380,26 @@ const App = (() => {
                 btn.classList.add('pulse');
                 setTimeout(() => btn.classList.remove('pulse'), 200);
             }
+        }
+
+        // Controller layout button — find SVG group with matching data-func
+        highlightControllerFunc(`chord${index + 1}`, active);
+    }
+
+    // Highlight a controller SVG button by function name (persistent on/off)
+    function highlightControllerFunc(func, active) {
+        const group = document.querySelector(`#controller-svg .ctrl-btn-group[data-func="${func}"]`);
+        if (group) {
+            group.classList.toggle('active', active);
+        }
+    }
+
+    // Flash a controller SVG button briefly (for momentary actions)
+    function flashControllerButton(func) {
+        const group = document.querySelector(`#controller-svg .ctrl-btn-group[data-func="${func}"]`);
+        if (group) {
+            group.classList.add('active');
+            setTimeout(() => group.classList.remove('active'), 250);
         }
     }
 
@@ -355,15 +427,12 @@ const App = (() => {
     }
 
     function updateJoystickVisual(direction) {
+        // Keyboard layout joystick knob
         const joystick = document.getElementById('joystick-knob');
         const label = document.getElementById('joystick-label');
-        if (!joystick) return;
 
-        if (!direction) {
-            joystick.style.transform = 'translate(-50%, -50%)';
-            if (label) label.textContent = '';
-            return;
-        }
+        // Controller layout left stick knob
+        const ctrlStick = document.getElementById('ctrl-left-stick');
 
         const offsets = {
             up: { x: 0, y: -15 },
@@ -376,8 +445,33 @@ const App = (() => {
             downRight: { x: 12, y: 12 }
         };
 
+        if (!direction) {
+            if (joystick) joystick.style.transform = 'translate(-50%, -50%)';
+            if (label) label.textContent = '';
+            // Reset controller stick
+            if (ctrlStick) {
+                ctrlStick.setAttribute('cx', 330);
+                ctrlStick.setAttribute('cy', 300);
+                ctrlStick.style.filter = '';
+            }
+            // Clear all joystick direction labels
+            document.querySelectorAll('.joy-dir').forEach(d => d.classList.remove('active'));
+            return;
+        }
+
         const offset = offsets[direction] || { x: 0, y: 0 };
-        joystick.style.transform = `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`;
+
+        // Move keyboard layout knob
+        if (joystick) {
+            joystick.style.transform = `translate(calc(-50% + ${offset.x}px), calc(-50% + ${offset.y}px))`;
+        }
+
+        // Move controller layout stick knob
+        if (ctrlStick) {
+            ctrlStick.setAttribute('cx', 330 + offset.x);
+            ctrlStick.setAttribute('cy', 300 + offset.y);
+            ctrlStick.style.filter = 'drop-shadow(0 0 8px rgba(168, 85, 247, 0.5))';
+        }
 
         if (label) {
             label.textContent = ChordEngine.getModifierLabel(direction);
@@ -421,25 +515,86 @@ const App = (() => {
 
     function updateLooperUI() {
         const tracks = Looper.getTracks();
+        const playing = Looper.isPlaying();
+        const recording = Looper.isRecording();
+
+        // Update play button
+        const playBtn = document.getElementById('loop-play-btn');
+        if (playBtn) {
+            playBtn.textContent = playing ? '⏹' : '▶';
+            playBtn.classList.toggle('playing', playing);
+        }
+
+        // Update record button
+        const recBtn = document.getElementById('loop-rec-btn');
+        if (recBtn) {
+            recBtn.classList.toggle('recording', recording);
+        }
+
+        // Update loop time display
+        const timeEl = document.getElementById('looper-time');
+        if (timeEl) {
+            const masterLen = Looper.getMasterLoopLength();
+            timeEl.textContent = masterLen ? `${masterLen.toFixed(1)}s` : '—';
+        }
+
+        // Update tracks
         tracks.forEach((track, i) => {
             const el = document.getElementById(`loop-track-${i}`);
-            if (el) {
-                el.classList.toggle('recorded', track.recorded);
-                el.classList.toggle('muted', track.muted);
-                el.classList.toggle('recording', Looper.isRecording() && Looper.getRecordingTrack() === i);
+            if (!el) return;
 
-                const label = el.querySelector('.track-label');
-                if (label) {
-                    if (track.recorded) {
-                        label.textContent = `${track.duration.toFixed(1)}s`;
-                    } else if (Looper.isRecording() && Looper.getRecordingTrack() === i) {
-                        label.textContent = 'REC...';
-                    } else {
-                        label.textContent = 'Empty';
-                    }
+            el.classList.toggle('recorded', track.recorded);
+            el.classList.toggle('muted', track.muted);
+            el.classList.toggle('soloed', track.solo);
+            el.classList.toggle('recording', recording && Looper.getRecordingTrack() === i);
+            el.classList.toggle('playing-track', playing && track.recorded && !track.muted);
+
+            const label = el.querySelector('.track-label');
+            if (label) {
+                if (track.recorded) {
+                    label.textContent = `${track.duration.toFixed(1)}s · ${track.eventCount}ev`;
+                } else if (recording && Looper.getRecordingTrack() === i) {
+                    label.textContent = '⏺ REC...';
+                } else {
+                    label.textContent = 'Empty';
                 }
             }
+
+            // Update mute/solo buttons
+            const muteBtn = document.getElementById(`track-mute-${i}`);
+            if (muteBtn) {
+                muteBtn.classList.toggle('active', track.muted);
+            }
+            const soloBtn = document.getElementById(`track-solo-${i}`);
+            if (soloBtn) {
+                soloBtn.classList.toggle('active', track.solo);
+            }
         });
+
+        // Update progress bar via callback
+        if (playing) {
+            Looper.setProgressCallback((progress) => {
+                const progressBar = document.getElementById('looper-progress');
+                if (progressBar) {
+                    progressBar.style.width = `${progress * 100}%`;
+                }
+                // Per-track progress bars
+                for (let i = 0; i < 6; i++) {
+                    const tpf = document.getElementById(`track-progress-${i}`);
+                    if (tpf && tracks[i]?.recorded) {
+                        tpf.style.width = `${progress * 100}%`;
+                    }
+                }
+            });
+        } else {
+            Looper.setProgressCallback(null);
+            const progressBar = document.getElementById('looper-progress');
+            if (progressBar) progressBar.style.width = '0%';
+            for (let i = 0; i < 6; i++) {
+                const tpf = document.getElementById(`track-progress-${i}`);
+                if (tpf) tpf.style.width = '0%';
+            }
+        }
     }
 
     function updateGamepadStatus(connected, name) {
@@ -559,6 +714,7 @@ const App = (() => {
             { id: 'btnSound', label: 'Sound Menu' },
             { id: 'btnMode', label: 'Mode Menu' },
             { id: 'looperToggle', label: 'Looper Rec/Stop' },
+            { id: 'looperPlayback', label: 'Looper Play/Stop' },
             { id: 'octaveUp', label: 'Octave Up' },
             { id: 'octaveDown', label: 'Octave Down' },
             { id: 'keyUp', label: 'Key Up' },
@@ -639,6 +795,9 @@ const App = (() => {
         setVolume: (val) => { volume = val; AudioEngine.setVolume(volume); updateUI(); },
 
         toggleLooper,
+        toggleLooperPlayback,
+        toggleLooperTrackMute,
+        toggleLooperTrackSolo,
         clearLooper: () => { Looper.clearAll(); updateLooperUI(); showNotification('🗑️ Looper cleared', 'info'); },
 
         getState: () => ({

@@ -28,7 +28,7 @@ const InputManager = (() => {
         'joystickUp', 'joystickDown', 'joystickLeft', 'joystickRight',
         'joystickUpLeft', 'joystickUpRight', 'joystickDownLeft', 'joystickDownRight',
         'joystickClick',
-        'looperToggle', 'octaveUp', 'octaveDown', 'keyUp', 'keyDown',
+        'looperToggle', 'looperPlayback', 'octaveUp', 'octaveDown', 'keyUp', 'keyDown',
         'prevInstrument', 'nextInstrument', 'prevMode', 'nextMode',
         'bpmUp', 'bpmDown', 'volumeUp', 'volumeDown'
     ];
@@ -50,6 +50,7 @@ const InputManager = (() => {
         'ArrowLeft': 'joystickLeft',
         'ArrowRight': 'joystickRight',
         'Space': 'looperToggle',
+        'KeyP': 'looperPlayback',
         'KeyQ': 'octaveDown',
         'KeyW': 'octaveUp',
         'KeyE': 'keyDown',
@@ -129,6 +130,46 @@ const InputManager = (() => {
     }
 
     // ── Keyboard ───────────────────────────────────────────────────────
+    // Track arrow key held-state for diagonal combining
+    const arrowKeyCodes = ['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'];
+    let currentKeyboardJoystickDirection = null;
+
+    function getKeyboardJoystickDirection() {
+        const up    = pressedKeys.has('ArrowUp');
+        const down  = pressedKeys.has('ArrowDown');
+        const left  = pressedKeys.has('ArrowLeft');
+        const right = pressedKeys.has('ArrowRight');
+
+        // Opposing axes cancel
+        const vertical   = (up && !down) ? -1 : (!up && down) ? 1 : 0;
+        const horizontal = (right && !left) ? 1 : (!right && left) ? -1 : 0;
+
+        if (vertical === -1 && horizontal === -1) return 'upLeft';
+        if (vertical === -1 && horizontal ===  1) return 'upRight';
+        if (vertical ===  1 && horizontal === -1) return 'downLeft';
+        if (vertical ===  1 && horizontal ===  1) return 'downRight';
+        if (vertical === -1) return 'up';
+        if (vertical ===  1) return 'down';
+        if (horizontal === -1) return 'left';
+        if (horizontal ===  1) return 'right';
+        return null;
+    }
+
+    function updateKeyboardJoystick() {
+        const newDir = getKeyboardJoystickDirection();
+        if (newDir === currentKeyboardJoystickDirection) return;
+
+        // Release the old direction
+        if (currentKeyboardJoystickDirection) {
+            fireInput(`joystick${capitalize(currentKeyboardJoystickDirection)}`, 'release', 'keyboard', 'arrows');
+        }
+        // Press the new direction
+        if (newDir) {
+            fireInput(`joystick${capitalize(newDir)}`, 'press', 'keyboard', 'arrows');
+        }
+        currentKeyboardJoystickDirection = newDir;
+    }
+
     function setupKeyboard() {
         document.addEventListener('keydown', (e) => {
             // Don't capture if typing in an input
@@ -142,9 +183,17 @@ const InputManager = (() => {
                 return;
             }
 
+            if (pressedKeys.has(e.code)) return; // already held
+            pressedKeys.add(e.code);
+
+            // Arrow keys are handled via the combined joystick direction
+            if (arrowKeyCodes.includes(e.code)) {
+                updateKeyboardJoystick();
+                return;
+            }
+
             const func = keyboardMap[e.code];
-            if (func && !pressedKeys.has(e.code)) {
-                pressedKeys.add(e.code);
+            if (func) {
                 fireInput(func, 'press', 'keyboard', e.code);
             }
         });
@@ -152,9 +201,17 @@ const InputManager = (() => {
         document.addEventListener('keyup', (e) => {
             if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
 
+            if (!pressedKeys.has(e.code)) return;
+            pressedKeys.delete(e.code);
+
+            // Arrow keys are handled via the combined joystick direction
+            if (arrowKeyCodes.includes(e.code)) {
+                updateKeyboardJoystick();
+                return;
+            }
+
             const func = keyboardMap[e.code];
-            if (func && pressedKeys.has(e.code)) {
-                pressedKeys.delete(e.code);
+            if (func) {
                 fireInput(func, 'release', 'keyboard', e.code);
             }
         });
