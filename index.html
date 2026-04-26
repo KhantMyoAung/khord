@@ -10,6 +10,16 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/tone/14.8.49/Tone.js"></script>
 </head>
 <body>
+<script>
+    (function() {
+        try {
+            const saved = localStorage.getItem('khord_theme') || 'gruvbox-light';
+            if (saved !== 'default') {
+                document.body.setAttribute('data-theme', saved);
+            }
+        } catch(e) {}
+    })();
+</script>
 
 <!-- ═══════════════ Splash Screen ═══════════════ -->
 <div id="splash-screen">
@@ -19,6 +29,11 @@
         <span>▶</span> Start Playing
     </button>
     <div class="splash-hint">Click to enable audio • Connect a gamepad anytime</div>
+    <div class="splash-credits">
+        <span>Designed by Khant Myo Aung</span>
+        <span class="credits-sep">•</span>
+        <span>Explore With Kelvin Co., Ltd.</span>
+    </div>
 </div>
 
 <!-- ═══════════════ Notifications ═══════════════ -->
@@ -58,8 +73,8 @@
         <div class="top-bar-right">
             <!-- Theme Picker -->
             <div class="theme-picker" title="Change theme">
-                <button class="theme-swatch theme-swatch-default active" id="theme-default"
-                    onclick="setTheme('default')" title="Default (Dark)"
+                <button class="theme-swatch" id="theme-default"
+                    onclick="setTheme('default')" title="Dark"
                     style="background:#0a0a0f; border-color:rgba(0,240,255,0.4);"></button>
                 <button class="theme-swatch" id="theme-strawberry"
                     onclick="setTheme('strawberry')" title="Strawberry"
@@ -875,9 +890,12 @@
 
     function restoreTheme() {
         try {
-            const saved = localStorage.getItem('khord_theme');
-            if (saved) setTheme(saved);
-        } catch(e) {}
+            // Default to gruvbox-light on first visit
+            const saved = localStorage.getItem('khord_theme') || 'gruvbox-light';
+            setTheme(saved);
+        } catch(e) {
+            setTheme('gruvbox-light');
+        }
     }
 </script>
 

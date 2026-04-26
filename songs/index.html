@@ -235,6 +235,68 @@
             .page { padding: 24px 16px 60px; }
             .songs-grid { grid-template-columns: 1fr; }
         }
+
+        /* ── Theme Overrides ─────────────────────────── */
+        [data-theme="strawberry"] {
+            --bg: #f37f83;
+            --bg-card: rgba(227, 80, 88, 0.35);
+            --bg-glass: rgba(255, 255, 255, 0.1);
+            --cyan: #fcfcf8;
+            --cyan-glow: rgba(252, 252, 248, 0.25);
+            --cyan-subtle: rgba(252, 252, 248, 0.12);
+            --purple: #e53c58;
+            --purple-glow: rgba(229, 60, 88, 0.3);
+            --green: #fcfcf8;
+            --yellow: #fcd23f;
+            --red: #fcd23f;
+            --text: #fcfcf8;
+            --text-dim: rgba(252, 252, 248, 0.7);
+            --text-muted: rgba(252, 252, 248, 0.45);
+            --border: rgba(255, 255, 255, 0.1);
+            --border-hover: rgba(255, 255, 255, 0.22);
+        }
+
+        [data-theme="gruvbox-light"] {
+            --bg: #fbf1c7;
+            --bg-card: rgba(235, 219, 178, 0.6);
+            --bg-glass: rgba(60, 56, 54, 0.04);
+            --cyan: #689d6a;
+            --cyan-glow: rgba(104, 157, 106, 0.3);
+            --cyan-subtle: rgba(104, 157, 106, 0.1);
+            --purple: #b16286;
+            --purple-glow: rgba(177, 98, 134, 0.3);
+            --green: #98971a;
+            --yellow: #d79921;
+            --red: #cc241d;
+            --text: #3c3836;
+            --text-dim: #665c54;
+            --text-muted: #a89984;
+            --border: rgba(60, 56, 54, 0.1);
+            --border-hover: rgba(60, 56, 54, 0.2);
+        }
+
+        [data-theme="beach"] {
+            --bg: #ffeead;
+            --bg-card: rgba(240, 206, 100, 0.3);
+            --bg-glass: rgba(91, 120, 105, 0.05);
+            --cyan: #96ceb4;
+            --cyan-glow: rgba(150, 206, 180, 0.35);
+            --cyan-subtle: rgba(150, 206, 180, 0.12);
+            --purple: #ff6f69;
+            --purple-glow: rgba(255, 111, 105, 0.3);
+            --green: #96ceb4;
+            --yellow: #ffcc5c;
+            --red: #ff6f69;
+            --text: #5b7869;
+            --text-dim: #7a9486;
+            --text-muted: #a3b9ae;
+            --border: rgba(91, 120, 105, 0.1);
+            --border-hover: rgba(91, 120, 105, 0.2);
+        }
+
+        body, .nav-bar, .song-card, .cta-section {
+            transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+        }
     </style>
 </head>
 <body>
@@ -417,9 +479,10 @@
         <div class="cta-title">🔔 Get notified when new songs drop</div>
         <p class="cta-desc">We're adding new song sheets every week. Be the first to know when your favorites are available.</p>
         <div class="cta-email">
-            <input type="email" class="cta-input" placeholder="your@email.com">
-            <button class="cta-submit">Notify Me</button>
+            <input type="email" id="notify-email" class="cta-input" placeholder="your@email.com">
+            <button id="notify-btn" class="cta-submit" onclick="submitEmail()">Notify Me</button>
         </div>
+        <div id="notify-status" style="margin-top: 12px; font-size: 0.85rem; display: none;"></div>
     </div>
 
     <div class="page-footer">
@@ -427,5 +490,62 @@
     </div>
 
 </div>
+
+<script>
+    (function() {
+        try {
+            const saved = localStorage.getItem('khord_theme') || 'gruvbox-light';
+            if (saved !== 'default') {
+                document.body.setAttribute('data-theme', saved);
+            }
+        } catch(e) {}
+    })();
+
+    // Replace this URL with your Google Apps Script Web App URL
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbxKcOhUfEvqDuA_bAR-ODuqVkQqo8r_4iJMiOC5UDkG-OsMx6kA8eri4E8WagaWDoU6lA/exec';
+
+    function submitEmail() {
+        const emailInput = document.getElementById('notify-email');
+        const btn = document.getElementById('notify-btn');
+        const status = document.getElementById('notify-status');
+        const email = emailInput.value.trim();
+
+        if (!email || !email.includes('@')) {
+            status.style.display = 'block';
+            status.style.color = 'var(--red)';
+            status.textContent = 'Please enter a valid email address.';
+            return;
+        }
+
+        btn.disabled = true;
+        btn.textContent = 'Submitting...';
+        status.style.display = 'none';
+
+        // Use no-cors to bypass CORS restrictions when posting to Google Apps Script
+        fetch(GOOGLE_SCRIPT_URL, {
+            method: 'POST',
+            mode: 'no-cors',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: 'email=' + encodeURIComponent(email)
+        })
+        .then(() => {
+            emailInput.value = '';
+            btn.disabled = false;
+            btn.textContent = 'Notify Me';
+            status.style.display = 'block';
+            status.style.color = 'var(--green)';
+            status.textContent = 'Success! You will be notified.';
+        })
+        .catch(error => {
+            btn.disabled = false;
+            btn.textContent = 'Notify Me';
+            status.style.display = 'block';
+            status.style.color = 'var(--red)';
+            status.textContent = 'Something went wrong. Please try again.';
+        });
+    }
+</script>
 </body>
 </html>

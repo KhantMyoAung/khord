@@ -186,6 +186,59 @@
             .chord-ref-grid { gap: 6px; }
             .chord-ref-item { min-width: 65px; padding: 8px; }
         }
+
+        /* ── Theme Overrides ─────────────────────────── */
+        [data-theme="strawberry"] {
+            --bg: #f37f83;
+            --bg-card: rgba(227, 80, 88, 0.35);
+            --cyan: #fcfcf8;
+            --cyan-glow: rgba(252, 252, 248, 0.25);
+            --cyan-subtle: rgba(252, 252, 248, 0.12);
+            --purple: #e53c58;
+            --green: #fcfcf8;
+            --yellow: #fcd23f;
+            --red: #fcd23f;
+            --text: #fcfcf8;
+            --text-dim: rgba(252, 252, 248, 0.7);
+            --text-muted: rgba(252, 252, 248, 0.45);
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        [data-theme="gruvbox-light"] {
+            --bg: #fbf1c7;
+            --bg-card: rgba(235, 219, 178, 0.6);
+            --cyan: #689d6a;
+            --cyan-glow: rgba(104, 157, 106, 0.3);
+            --cyan-subtle: rgba(104, 157, 106, 0.1);
+            --purple: #b16286;
+            --green: #98971a;
+            --yellow: #d79921;
+            --red: #cc241d;
+            --text: #3c3836;
+            --text-dim: #665c54;
+            --text-muted: #a89984;
+            --border: rgba(60, 56, 54, 0.1);
+        }
+
+        [data-theme="beach"] {
+            --bg: #ffeead;
+            --bg-card: rgba(240, 206, 100, 0.3);
+            --cyan: #96ceb4;
+            --cyan-glow: rgba(150, 206, 180, 0.35);
+            --cyan-subtle: rgba(150, 206, 180, 0.12);
+            --purple: #ff6f69;
+            --green: #96ceb4;
+            --yellow: #ffcc5c;
+            --red: #ff6f69;
+            --text: #5b7869;
+            --text-dim: #7a9486;
+            --text-muted: #a3b9ae;
+            --border: rgba(91, 120, 105, 0.1);
+        }
+
+        body, .setup-box, .chord-ref-item, .sheet-box, .chord-bubble {
+            transition: background-color 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+        }
     </style>
 </head>
 <body>
@@ -409,5 +462,16 @@
     </div>
 
 </div>
+
+<script>
+    (function() {
+        try {
+            const saved = localStorage.getItem('khord_theme') || 'gruvbox-light';
+            if (saved !== 'default') {
+                document.body.setAttribute('data-theme', saved);
+            }
+        } catch(e) {}
+    })();
+</script>
 </body>
 </html>

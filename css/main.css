@@ -297,6 +297,22 @@ body::before {
     color: var(--text-tertiary);
 }
 
+.splash-credits {
+    position: absolute;
+    bottom: 30px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    font-size: 0.75rem;
+    color: var(--text-tertiary);
+    font-weight: 500;
+    letter-spacing: 0.5px;
+}
+
+.credits-sep {
+    color: var(--border);
+}
+
 @keyframes logoGlow {
     0%, 100% { filter: brightness(1); }
     50% { filter: brightness(1.2); }
