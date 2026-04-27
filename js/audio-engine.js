@@ -161,8 +161,8 @@ const AudioEngine = (() => {
         effects.reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 });
         effects.delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.3, wet: 0.25 });
         effects.chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0.3 });
-        effects.tremolo = new Tone.Tremolo({ frequency: 4, depth: 0.5, wet: 0.3 }).start();
-        effects.filter = new Tone.AutoFilter({ frequency: 1, type: 'sine', depth: 1, wet: 0.3 }).start();
+        effects.tremolo = new Tone.Tremolo({ frequency: 4, depth: 0.5, wet: 0.3 });
+        effects.filter = new Tone.AutoFilter({ frequency: 1, type: 'sine', depth: 1, wet: 0.3 });
         effects.distortion = new Tone.Distortion({ distortion: 0.4, wet: 0.2 });
 
         await effects.reverb.generate();

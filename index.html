@@ -25,7 +25,7 @@
 <div id="splash-screen">
     <div class="splash-logo">Khord</div>
     <div class="splash-subtitle">Virtual pocket instrument — map any controller or keyboard to play chords, loops, drums & more</div>
-    <button class="splash-cta" onclick="startApp()">
+    <button class="splash-cta" onclick="startApp()" ontouchend="event.preventDefault(); startApp()">
         <span>▶</span> Start Playing
     </button>
     <div class="splash-hint">Click to enable audio • Connect a gamepad anytime</div>
@@ -562,8 +562,15 @@
 <script>
     // ── Boot ──────────────────────────────────────────────────
     async function startApp() {
-        await Tone.start(); // Ensure this is the very first thing called on interaction
         const splash = document.getElementById('splash-screen');
+        if (splash.classList.contains('hidden')) return; // Prevent double firing from touch+click
+
+        // Force synchronous resume for strict mobile browsers
+        if (Tone.context.state !== 'running') {
+            Tone.context.resume();
+        }
+        await Tone.start();
+        
         splash.classList.add('hidden');
         await App.init();
         buildUI();

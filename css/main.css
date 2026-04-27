@@ -1965,13 +1965,17 @@ body::before {
     }
     .joystick-container {
         order: -1;
+        margin-bottom: 12px;
     }
     .chord-buttons-grid {
-        grid-template-columns: repeat(3, 1fr);
+        grid-template-columns: repeat(2, 1fr);
+        gap: 12px;
+    }
+    .chord-btn {
+        min-height: 90px;
     }
     .chord-btn:nth-child(7) {
-        grid-column: auto;
-        grid-row: auto;
+        grid-column: 1 / -1;
     }
     .mapping-panel {
         width: 95%;
@@ -1985,7 +1989,15 @@ body::before {
         font-size: 0.7rem;
     }
     .controller-legend {
-        gap: 12px;
+        display: none;
     }
+    .splash-cta {
+        padding: 20px 40px;
+        font-size: 1.2rem;
+    }
+}
+
+button, .chord-btn, .piano-key, .nav-back, .theme-swatch {
+    touch-action: manipulation;
 }
 
