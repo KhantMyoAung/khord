@@ -28,10 +28,7 @@
 <div id="splash-screen">
     <div class="splash-logo">Khord</div>
     <div class="splash-subtitle">Virtual pocket instrument — map any controller or keyboard to play chords, loops, drums & more</div>
-    <button class="splash-cta" id="splash-cta-btn"
-        onclick="startApp()"
-        ontouchstart="event.preventDefault(); startApp()"
-        ontouchend="event.preventDefault();">
+    <button class="splash-cta" id="splash-cta-btn" onclick="startApp()">
         <span>▶</span> Start Playing
     </button>
     <div class="splash-hint">Click to enable audio • Connect a gamepad anytime</div>
@@ -567,64 +564,71 @@
 <script src="js/app.js"></script>
 <script>
     // ── Boot ──────────────────────────────────────────────────
+    // CRITICAL RULES for Samsung/Android AudioContext unlock:
+    //  1. Must call Tone.start() / ctx.resume() SYNCHRONOUSLY inside gesture
+    //  2. Must NOT call event.preventDefault() before the audio unlock
+    //  3. Must NOT await anything before Tone.start()
+
     let _appBooting = false;
 
-    async function startApp() {
+    // Non-async wrapper — synchronously fires audio unlock, then chains async
+    function startApp() {
         if (_appBooting) return;
+        const splash = document.getElementById('splash-screen');
+        if (splash.classList.contains('hidden')) return;
         _appBooting = true;
 
-        const splash = document.getElementById('splash-screen');
-        if (splash.classList.contains('hidden')) { _appBooting = false; return; }
-
+        // ── SYNC unlock inside user gesture (no await before this!) ──
         try {
-            // ── Step 1: Unlock raw Web Audio context (Samsung requirement) ──
-            // Samsung Internet blocks audio unless the *underlying* AudioContext
-            // is explicitly .resume()'d inside a direct user-gesture handler.
+            const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
+            if (rawCtx && typeof rawCtx.resume === 'function') {
+                rawCtx.resume();
+            }
+            Tone.start();
+        } catch(_) {}
+
+        // ── Chain async boot ──
+        _bootAsync().catch(function(err) {
+            console.error('Boot error:', err);
+            _appBooting = false;
+        });
+    }
+
+    async function _bootAsync() {
+        const splash = document.getElementById('splash-screen');
+
+        // Wait for context to be truly running (retry up to 3×)
+        for (let i = 0; i < 3; i++) {
+            try { await Tone.start(); } catch(_) {}
+            if (Tone.context.state === 'running') break;
+            await new Promise(r => setTimeout(r, 200));
+        }
+
+        // Silent warmup blip — forces Samsung Chromium out of suspended state
+        try {
             const rawCtx = Tone.context.rawContext
                         || Tone.context._context
                         || Tone.context;
-            if (rawCtx && typeof rawCtx.resume === 'function') {
-                await rawCtx.resume();
+            if (rawCtx && rawCtx.createOscillator) {
+                const o = rawCtx.createOscillator();
+                const g = rawCtx.createGain();
+                g.gain.value = 0.0001;
+                o.connect(g);
+                g.connect(rawCtx.destination);
+                o.start();
+                o.stop(rawCtx.currentTime + 0.05);
             }
+        } catch(_) {}
 
-            // ── Step 2: Official Tone.js unlock ──
-            await Tone.start();
+        console.log('🔊 Audio context state:', Tone.context.state);
 
-            // ── Step 3: Silent warm-up oscillator ──
-            // Some Samsung/Chromium builds remain suspended until actual audio
-            // data flows through the graph.  A near-silent blip fixes this.
-            try {
-                const ctx = rawCtx || Tone.context;
-                if (ctx && ctx.createOscillator) {
-                    const o = ctx.createOscillator();
-                    const g = ctx.createGain();
-                    g.gain.value = 0.001;
-                    o.connect(g);
-                    g.connect(ctx.destination);
-                    o.start();
-                    o.stop(ctx.currentTime + 0.05);
-                }
-            } catch (_) {}
-
-            // ── Step 4: Verify context is running ──
-            if (Tone.context.state !== 'running') {
-                // One more attempt after a short delay
-                await new Promise(r => setTimeout(r, 150));
-                await Tone.start();
-            }
-
-            console.log('🔊 Audio context state after boot:', Tone.context.state);
-
-            splash.classList.add('hidden');
-            await App.init();
-            buildUI();
-        } catch (err) {
-            console.error('startApp error:', err);
-            _appBooting = false;
-            // Let the user retry
-            alert('Audio failed to start. Please tap "Start Playing" again.');
-        }
+        splash.classList.add('hidden');
+        await App.init();
+        buildUI();
+        _appBooting = false;
     }
+
+    // (No DOMContentLoaded listener needed; onclick is bound in HTML)
 
     function buildUI() {
         buildPiano();
