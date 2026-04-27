@@ -1952,52 +1952,423 @@ body::before {
 }
 
 @media (max-width: 768px) {
+    /* ── Top Bar: compact, single row ── */
     .top-bar {
-        flex-direction: column;
-        gap: 8px;
-        padding: 8px 16px;
+        flex-direction: row;
+        flex-wrap: wrap;
+        gap: 6px;
+        padding: 8px 12px;
     }
+    .top-bar-left {
+        gap: 10px;
+    }
+    .top-bar-left .logo {
+        font-size: 1.1rem;
+    }
+    .music-sheets-btn {
+        padding: 4px 10px;
+        font-size: 0.65rem;
+    }
+    .top-bar-center {
+        order: 3;
+        width: 100%;
+        gap: 4px;
+        overflow-x: auto;
+        flex-wrap: nowrap;
+        -webkit-overflow-scrolling: touch;
+        scrollbar-width: none;
+        padding-bottom: 2px;
+    }
+    .top-bar-center::-webkit-scrollbar { display: none; }
+    .info-chip {
+        padding: 4px 10px;
+        font-size: 0.7rem;
+        flex-shrink: 0;
+    }
+    .top-bar-right {
+        gap: 6px;
+    }
+    .top-bar-right .gamepad-status {
+        display: none;
+    }
+    .btn-icon {
+        width: 34px;
+        height: 34px;
+        font-size: 1rem;
+    }
+    .theme-picker {
+        padding: 3px 6px;
+        gap: 4px;
+    }
+    .theme-swatch {
+        width: 16px;
+        height: 16px;
+    }
+
+    /* ── Main Content ── */
     .main-content {
-        padding: var(--gap-md);
+        padding: 10px;
+        gap: 12px;
     }
+
+    /* ── Device Section ── */
+    .device-section {
+        gap: 12px;
+    }
+    .oled-container {
+        border-radius: var(--radius-md);
+    }
+    .oled-screen {
+        padding: 10px 14px;
+        min-height: 80px;
+    }
+    .oled-chord {
+        font-size: 2rem;
+        padding: 4px 0;
+    }
+
+    /* ── Layout Toggle ── */
+    .layout-toggle-bar {
+        margin-bottom: 10px;
+    }
+    .layout-toggle-btn {
+        padding: 8px 16px;
+        font-size: 0.75rem;
+        min-height: 36px;
+    }
+
+    /* ── Device Body ── */
+    .device-body {
+        padding: 14px;
+        border-radius: var(--radius-lg);
+    }
+
+    /* ── Function Buttons ── */
+    .function-buttons {
+        gap: 8px;
+        margin-bottom: 14px;
+    }
+    .func-btn {
+        width: auto;
+        flex: 1;
+        height: 44px;
+        font-size: 0.65rem;
+        border-radius: var(--radius-sm);
+    }
+
+    /* ── Controls Layout ── */
     .controls-layout {
         grid-template-columns: 1fr;
+        gap: 14px;
     }
     .joystick-container {
         order: -1;
-        margin-bottom: 12px;
+        margin-bottom: 4px;
     }
+    .joystick-housing {
+        width: 100px;
+        height: 100px;
+    }
+    .joystick-knob {
+        width: 44px;
+        height: 44px;
+    }
+    .joy-dir {
+        font-size: 0.5rem;
+    }
+
+    /* ── Chord Buttons ── */
     .chord-buttons-grid {
         grid-template-columns: repeat(2, 1fr);
-        gap: 12px;
+        gap: 10px;
     }
     .chord-btn {
-        min-height: 90px;
+        min-height: 72px;
+        padding: 12px 8px;
+        border-radius: var(--radius-sm);
+    }
+    .chord-btn .chord-name {
+        font-size: 1rem;
+    }
+    .chord-btn .chord-number {
+        font-size: 0.6rem;
+    }
+    .chord-btn .chord-desc {
+        font-size: 0.55rem;
+    }
+    .chord-btn .chord-key {
+        font-size: 0.5rem;
+        padding: 1px 4px;
     }
     .chord-btn:nth-child(7) {
         grid-column: 1 / -1;
     }
+
+    /* ── Mode Info ── */
+    .mode-info-bar {
+        font-size: 0.7rem;
+        padding: 6px 0;
+        gap: 8px;
+    }
+
+    /* ── Piano ── */
+    .piano-container {
+        padding: 6px;
+    }
+    .piano-key {
+        width: 18px;
+        height: 55px;
+    }
+    .piano-key.black {
+        width: 13px;
+        height: 36px;
+        margin: 0 -6.5px;
+    }
+
+    /* ── Waveform ── */
+    #waveform-canvas {
+        height: 50px;
+    }
+
+    /* ── Panel Cards ── */
+    .panel-card {
+        padding: 12px;
+        border-radius: var(--radius-md);
+    }
+    .panel-title {
+        font-size: 0.7rem;
+        margin-bottom: 6px;
+    }
+
+    /* ── Instrument Grid ── */
+    .instrument-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+        max-height: 160px;
+    }
+    .inst-btn {
+        padding: 8px 4px;
+        font-size: 0.6rem;
+        min-height: 36px;
+    }
+
+    /* ── Effects Grid ── */
+    .effects-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+    }
+    .fx-toggle {
+        padding: 10px 4px;
+        font-size: 0.65rem;
+        min-height: 40px;
+    }
+
+    /* ── Mode Grid ── */
+    .mode-grid {
+        grid-template-columns: repeat(3, 1fr);
+        gap: 5px;
+    }
+    .mode-btn {
+        padding: 8px 4px;
+        font-size: 0.6rem;
+        min-height: 36px;
+    }
+
+    /* ── Key Selector ── */
+    .key-selector {
+        gap: 4px;
+    }
+    .key-selector .key-btn {
+        width: 32px;
+        height: 32px;
+        font-size: 0.65rem;
+    }
+
+    /* ── Controls (BPM/Vol) ── */
+    .control-slider::-webkit-slider-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    .control-slider::-moz-range-thumb {
+        width: 20px;
+        height: 20px;
+    }
+    .control-slider {
+        height: 6px;
+    }
+
+    /* ── Bottom Panel / Looper ── */
+    .bottom-panel {
+        flex-direction: column;
+        gap: 8px;
+        padding: 10px 12px 14px;
+        align-items: stretch;
+    }
+    .looper-header {
+        flex-direction: row;
+        justify-content: space-between;
+        align-items: center;
+        min-width: unset;
+    }
+    .looper-controls {
+        justify-content: center;
+        gap: 10px;
+    }
+    .loop-btn {
+        width: 44px;
+        height: 44px;
+        font-size: 1.1rem;
+        border-radius: var(--radius-md);
+    }
+    .looper-progress-bar {
+        width: 100%;
+        height: 5px;
+    }
+    .looper-tracks {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 6px;
+    }
+    .loop-track {
+        height: 40px;
+        flex: unset;
+    }
+    .track-mute-btn, .track-solo-btn {
+        width: 20px;
+        height: 18px;
+        font-size: 0.5rem;
+        opacity: 1;
+    }
+
+    /* ── Mapping Panel ── */
     .mapping-panel {
         width: 95%;
         padding: var(--gap-md);
+        max-height: 90vh;
+    }
+    .mapping-header h2 {
+        font-size: 1.1rem;
     }
     .mapping-row {
-        grid-template-columns: 1fr 80px 80px;
+        grid-template-columns: 1fr 70px 70px;
+        padding: 6px 8px;
+        gap: 6px;
     }
-    .layout-toggle-btn {
-        padding: 6px 14px;
+    .mapping-func {
         font-size: 0.7rem;
     }
+    .mapping-key, .mapping-gamepad {
+        padding: 5px 8px;
+        font-size: 0.65rem;
+    }
+
+    /* ── Controller layout ── */
     .controller-legend {
         display: none;
     }
+
+    /* ── Splash ── */
+    .splash-logo {
+        font-size: 3rem;
+    }
+    .splash-subtitle {
+        font-size: 0.95rem;
+        margin-bottom: 30px;
+        padding: 0 20px;
+    }
     .splash-cta {
-        padding: 20px 40px;
-        font-size: 1.2rem;
+        padding: 18px 36px;
+        font-size: 1.1rem;
+    }
+    .splash-hint {
+        font-size: 0.75rem;
+        padding: 0 20px;
+        text-align: center;
+    }
+    .splash-credits {
+        bottom: 20px;
+        font-size: 0.65rem;
+        flex-direction: column;
+        gap: 4px;
+    }
+    .credits-sep {
+        display: none;
+    }
+
+    /* ── Notifications ── */
+    #notifications {
+        top: auto;
+        bottom: 16px;
+        right: 12px;
+        left: 12px;
+    }
+    .notification {
+        font-size: 0.75rem;
+        padding: 8px 14px;
+        transform: translateY(20px);
+    }
+    .notification.show {
+        transform: translateY(0);
+    }
+
+    /* ── Keyboard shortcuts (hide on mobile) ── */
+    .panel-card:has([style*="grid-template-columns:1fr 1fr"]) {
+        display: none;
     }
 }
 
-button, .chord-btn, .piano-key, .nav-back, .theme-swatch {
+/* ── Extra-small phones (≤ 480px) ── */
+@media (max-width: 480px) {
+    .main-content {
+        padding: 8px;
+        gap: 10px;
+    }
+    .device-body {
+        padding: 10px;
+    }
+    .chord-buttons-grid {
+        gap: 8px;
+    }
+    .chord-btn {
+        min-height: 64px;
+        padding: 10px 6px;
+    }
+    .chord-btn .chord-name {
+        font-size: 0.9rem;
+    }
+    .joystick-housing {
+        width: 90px;
+        height: 90px;
+    }
+    .joystick-knob {
+        width: 40px;
+        height: 40px;
+    }
+    .looper-tracks {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .inst-btn, .mode-btn {
+        font-size: 0.55rem;
+        padding: 6px 3px;
+    }
+    .instrument-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+/* ── Touch behavior ── */
+button, .chord-btn, .piano-key, .nav-back, .theme-swatch,
+.func-btn, .fx-toggle, .inst-btn, .mode-btn, .loop-btn,
+.loop-track, .key-btn, .layout-toggle-btn, .mapping-key,
+.mapping-gamepad, .control-slider, .splash-cta {
     touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Prevent text selection on interactive elements during play */
+.device-body, .chord-buttons-grid, .joystick-container,
+.function-buttons, .bottom-panel {
+    -webkit-user-select: none;
+    user-select: none;
 }
 

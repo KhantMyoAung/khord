@@ -147,8 +147,42 @@ const AudioEngine = (() => {
     async function init() {
         if (isInitialized) return;
 
-        await Tone.start();
-        console.log('🎵 Audio engine started');
+        // ── Step 1: Force-resume the raw AudioContext (Samsung fix) ──
+        try {
+            const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
+            if (rawCtx && typeof rawCtx.resume === 'function' && rawCtx.state !== 'running') {
+                await rawCtx.resume();
+            }
+        } catch (e) {
+            console.warn('Raw context resume failed:', e);
+        }
+
+        // ── Step 2: Tone.start() — official unlock ──
+        try {
+            await Tone.start();
+        } catch (e) {
+            console.warn('Tone.start() failed, retrying…', e);
+            await new Promise(r => setTimeout(r, 100));
+            await Tone.start();
+        }
+
+        // ── Step 3: Play silent warmup to truly unlock on Samsung ──
+        try {
+            const warmup = Tone.context.rawContext || Tone.context._context || Tone.context;
+            if (warmup && warmup.createOscillator) {
+                const osc = warmup.createOscillator();
+                const gain = warmup.createGain();
+                gain.gain.value = 0.001; // inaudible
+                osc.connect(gain);
+                gain.connect(warmup.destination);
+                osc.start();
+                osc.stop(warmup.currentTime + 0.05);
+            }
+        } catch (e) {
+            console.warn('Warmup oscillator failed:', e);
+        }
+
+        console.log('🎵 Audio engine started — context state:', Tone.context.state);
 
         // Create master gain
         masterGain = new Tone.Gain(0.7).toDestination();
@@ -157,15 +191,25 @@ const AudioEngine = (() => {
         analyser = new Tone.Analyser('waveform', 256);
         masterGain.connect(analyser);
 
-        // Create effects (initially bypassed)
-        effects.reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 });
-        effects.delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.3, wet: 0.25 });
-        effects.chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0.3 });
-        effects.tremolo = new Tone.Tremolo({ frequency: 4, depth: 0.5, wet: 0.3 });
-        effects.filter = new Tone.AutoFilter({ frequency: 1, type: 'sine', depth: 1, wet: 0.3 });
-        effects.distortion = new Tone.Distortion({ distortion: 0.4, wet: 0.2 });
+        // Create effects (initially bypassed). Wrapped in try-catch
+        // so a single failure doesn't prevent the whole engine from loading.
+        try {
+            effects.reverb = new Tone.Reverb({ decay: 2.5, wet: 0.3 });
+            effects.delay = new Tone.FeedbackDelay({ delayTime: '8n', feedback: 0.3, wet: 0.25 });
+            effects.chorus = new Tone.Chorus({ frequency: 1.5, delayTime: 3.5, depth: 0.7, wet: 0.3 });
+            effects.tremolo = new Tone.Tremolo({ frequency: 4, depth: 0.5, wet: 0.3 });
+            effects.filter = new Tone.AutoFilter({ frequency: 1, type: 'sine', depth: 1, wet: 0.3 });
+            effects.distortion = new Tone.Distortion({ distortion: 0.4, wet: 0.2 });
 
-        await effects.reverb.generate();
+            // LFO-based effects MUST be started or they block audio
+            effects.chorus.start();
+            effects.tremolo.start();
+            effects.filter.start();
+
+            await effects.reverb.generate();
+        } catch (e) {
+            console.warn('Effects creation partially failed:', e);
+        }
 
         // Create initial synth
         createSynth(0);
