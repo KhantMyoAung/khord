@@ -147,6 +147,27 @@ const AudioEngine = (() => {
     // Note: AudioContext initialization and unlocking is now handled 
     // centrally in the startApp() function within index.html to ensure 
     // a fresh context is created during the user gesture.
+    
+    function _syncUnlock() {
+        // SYNCHRONOUS — no await before this! 
+        try {
+            const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
+            if (rawCtx && typeof rawCtx.resume === 'function' && rawCtx.state !== 'running') {
+                rawCtx.resume();
+            }
+            Tone.start();
+            // Silent buffer with real data to force iOS/Samsung HW unlock
+            if (rawCtx && typeof rawCtx.createBuffer === 'function') {
+                const buffer = rawCtx.createBuffer(1, 2, rawCtx.sampleRate || 44100);
+                const data = buffer.getChannelData(0);
+                data[0] = 1; data[1] = 1;
+                const source = rawCtx.createBufferSource();
+                source.buffer = buffer;
+                source.connect(rawCtx.destination);
+                source.start(0);
+            }
+        } catch(e) {}
+    }
 
     // ── Initialize ─────────────────────────────────────────────────────
     async function init() {
