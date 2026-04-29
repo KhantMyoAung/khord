@@ -143,46 +143,86 @@ const AudioEngine = (() => {
         distortion: false
     };
 
-    // ── Mobile Audio Auto-Unlocker ─────────────────────────────────────
-    let autoUnlockerInitialized = false;
-    function setupAutoUnlocker() {
-        if (autoUnlockerInitialized) return;
-        autoUnlockerInitialized = true;
+    // ── Mobile Audio Auto-Unlocker (Shared Piano pattern) ──────────────
+    // Key insight from Chrome Music Lab: the unlock MUST be synchronous
+    // inside the gesture handler. Using await before resume() will cause
+    // Samsung/Android browsers to ignore the gesture.
+    let _audioUnlocked = false;
 
-        const unlockEvents = ['touchstart', 'touchend', 'mousedown', 'keydown'];
-        const unlock = async () => {
-            if (Tone.context.state !== 'running') {
-                try {
-                    await Tone.start();
-                    if (Tone.context.state === 'suspended') {
-                        await Tone.context.resume();
-                    }
-                    // Silent warmup buffer to fully unlock iOS Safari Web Audio API
-                    const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
-                    if (rawCtx && typeof rawCtx.createBuffer === 'function') {
-                        const buffer = rawCtx.createBuffer(1, 1, 22050);
-                        const source = rawCtx.createBufferSource();
-                        source.buffer = buffer;
-                        source.connect(rawCtx.destination);
-                        source.start(0);
-                    }
-                    if (Tone.context.state === 'running') {
-                        unlockEvents.forEach(evt => document.removeEventListener(evt, unlock, true));
-                    }
-                } catch (e) {
-                    console.warn('Auto-unlock failed', e);
-                }
-            } else {
-                unlockEvents.forEach(evt => document.removeEventListener(evt, unlock, true));
+    function _playSilentBuffer(ctx) {
+        // Shared Piano trick: play a buffer with real (non-zero) data
+        // to force iOS Safari & Samsung to fully activate the audio HW
+        try {
+            const buffer = ctx.createBuffer(1, 2, ctx.sampleRate || 44100);
+            const data = buffer.getChannelData(0);
+            data[0] = 1;  // Must be non-zero to trigger audio driver
+            data[1] = 1;
+            const source = ctx.createBufferSource();
+            source.buffer = buffer;
+            source.connect(ctx.destination);
+            source.start(0);
+            source.onended = () => { try { source.disconnect(); } catch(e){} };
+        } catch (e) {
+            console.warn('Silent buffer failed:', e);
+        }
+    }
+
+    function _syncUnlock() {
+        // SYNCHRONOUS — no await before this! Samsung requires it.
+        try {
+            const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
+            // 1. Synchronous resume (returns a promise but we don't await it here)
+            if (rawCtx && typeof rawCtx.resume === 'function' && rawCtx.state !== 'running') {
+                rawCtx.resume();
             }
-        };
+            // 2. Tone.start() also called synchronously within gesture
+            Tone.start();
+            // 3. Silent buffer with real data to force iOS/Samsung HW unlock
+            if (rawCtx && typeof rawCtx.createBuffer === 'function') {
+                _playSilentBuffer(rawCtx);
+            }
+        } catch(e) {
+            console.warn('Sync unlock error:', e);
+        }
+    }
 
-        unlockEvents.forEach(evt => {
-            document.addEventListener(evt, unlock, { once: false, capture: true, passive: true });
+    function setupAutoUnlocker() {
+        const events = ['touchstart', 'touchend', 'mousedown', 'keydown', 'click'];
+
+        function onGesture() {
+            // Always try to unlock synchronously inside the gesture
+            _syncUnlock();
+
+            // Check if it worked (async follow-up)
+            setTimeout(() => {
+                if (Tone.context.state === 'running') {
+                    if (!_audioUnlocked) {
+                        _audioUnlocked = true;
+                        console.log('🔓 Audio unlocked via user gesture');
+                    }
+                } else {
+                    // Still suspended — try again on next gesture
+                    console.warn('Audio still suspended after gesture, state:', Tone.context.state);
+                }
+            }, 100);
+        }
+
+        events.forEach(evt => {
+            // Use capture + not-once so it fires on every gesture until unlocked
+            // Also catches re-suspend after backgrounding
+            document.addEventListener(evt, onGesture, { capture: true, passive: true });
+        });
+
+        // Handle visibility change (user backgrounds and returns to app)
+        document.addEventListener('visibilitychange', () => {
+            if (document.visibilityState === 'visible' && Tone.context.state !== 'running') {
+                _audioUnlocked = false;
+                console.log('🔄 App visible again, audio context suspended. Waiting for gesture...');
+            }
         });
     }
 
-    // Setup auto-unlocker immediately to catch the very first interaction
+    // Setup auto-unlocker immediately
     setupAutoUnlocker();
 
     // ── Initialize ─────────────────────────────────────────────────────
@@ -401,6 +441,7 @@ const AudioEngine = (() => {
         BEAT_PATTERNS,
 
         init,
+        syncUnlock: _syncUnlock,
 
         playChord,
         releaseChord,

@@ -323,6 +323,43 @@ body::before {
     50% { box-shadow: 0 0 35px var(--cyan-glow); }
 }
 
+/* ── Audio Resume Overlay ───────────────────────────────────── */
+#audio-resume-overlay {
+    position: fixed;
+    top: 80px;
+    left: 50%;
+    transform: translateX(-50%);
+    z-index: 2000;
+    transition: opacity 0.3s, visibility 0.3s;
+}
+
+#audio-resume-overlay.hidden {
+    opacity: 0;
+    visibility: hidden;
+    pointer-events: none;
+}
+
+.audio-resume-btn {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 12px 28px;
+    background: var(--red);
+    color: #fff;
+    border: none;
+    border-radius: var(--radius-xl);
+    font-size: 1.1rem;
+    font-weight: 700;
+    box-shadow: 0 4px 20px rgba(239, 68, 68, 0.5);
+    cursor: pointer;
+    animation: pulseGlowRed 2s infinite;
+}
+
+@keyframes pulseGlowRed {
+    0%, 100% { box-shadow: 0 0 10px rgba(239, 68, 68, 0.4); transform: scale(1); }
+    50% { box-shadow: 0 0 25px rgba(239, 68, 68, 0.8); transform: scale(1.05); }
+}
+
 /* ── Main Layout ────────────────────────────────────────────── */
 #app {
     position: relative;

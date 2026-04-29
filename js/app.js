@@ -613,9 +613,24 @@ const App = (() => {
     }
 
     // ── Waveform Visualization Loop ────────────────────────────────────
+    let audioOverlayEl = null;
+
     function updateLoop() {
         // Draw waveform
         drawWaveform();
+
+        // Check audio context state for the prominent overlay
+        if (initialized && Tone && Tone.context) {
+            if (!audioOverlayEl) audioOverlayEl = document.getElementById('audio-resume-overlay');
+            if (audioOverlayEl) {
+                if (Tone.context.state === 'suspended') {
+                    audioOverlayEl.classList.remove('hidden');
+                } else {
+                    audioOverlayEl.classList.add('hidden');
+                }
+            }
+        }
+
         requestAnimationFrame(updateLoop);
     }
 
@@ -787,9 +802,15 @@ const App = (() => {
         clearLooper: () => { Looper.clearAll(); updateLooperUI(); showNotification('🗑️ Looper cleared', 'info'); },
 
         resumeAudio: async () => {
+            // Synchronous unlock first (Shared Piano pattern)
+            AudioEngine.syncUnlock();
+            // Then async follow-up
+            await new Promise(r => setTimeout(r, 150));
             const state = await AudioEngine.resumeAudioContext();
             if (state === 'running') {
                 showNotification('🔊 Audio Active', 'success');
+            } else {
+                showNotification('⚠️ Audio still suspended — tap again', 'warning');
             }
         },
 

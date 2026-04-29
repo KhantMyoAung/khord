@@ -100,6 +100,13 @@
 <!-- ═══════════════ Notifications ═══════════════ -->
 <div id="notifications"></div>
 
+<!-- ═══════════════ Audio Resume Overlay ═══════════════ -->
+<div id="audio-resume-overlay" class="hidden">
+    <button class="audio-resume-btn" onclick="App.resumeAudio()">
+        <span>🔊</span> Tap to Enable Audio
+    </button>
+</div>
+
 <!-- ═══════════════ Main App ═══════════════ -->
 <div id="app">
 
@@ -623,10 +630,11 @@
 <script src="js/app.js"></script>
 <script>
     // ── Boot ──────────────────────────────────────────────────
-    // CRITICAL RULES for Samsung/Android AudioContext unlock:
-    //  1. Must call Tone.start() / ctx.resume() SYNCHRONOUSLY inside gesture
-    //  2. Must NOT call event.preventDefault() before the audio unlock
-    //  3. Must NOT await anything before Tone.start()
+    // Chrome Music Lab / Shared Piano pattern:
+    //  1. Call Tone.start() / ctx.resume() SYNCHRONOUSLY inside gesture
+    //  2. Do NOT await anything before the resume call
+    //  3. Play a silent buffer with REAL data (non-zero) to force HW unlock
+    //  4. Then chain the async initialization after
 
     let _appBooting = false;
 
@@ -637,16 +645,33 @@
         if (splash.classList.contains('hidden')) return;
         _appBooting = true;
 
-        // ── SYNC unlock inside user gesture (no await before this!) ──
+        // ── SYNC unlock inside user gesture (Shared Piano pattern) ──
+        // This MUST run synchronously — no await before these calls!
         try {
             const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
-            console.log('Got rawCtx. typeof resume:', rawCtx ? typeof rawCtx.resume : 'undefined');
+            console.log('Raw context state before unlock:', rawCtx ? rawCtx.state : 'N/A');
+
+            // 1. Synchronous resume
             if (rawCtx && typeof rawCtx.resume === 'function') {
                 rawCtx.resume();
-                console.log('Called rawCtx.resume() synchronously.');
             }
+
+            // 2. Tone.start() synchronously
             Tone.start();
-            console.log('Called Tone.start() synchronously.');
+
+            // 3. Silent buffer with REAL data (forces iOS/Samsung audio HW)
+            if (rawCtx && typeof rawCtx.createBuffer === 'function') {
+                const buf = rawCtx.createBuffer(1, 2, rawCtx.sampleRate || 44100);
+                const d = buf.getChannelData(0);
+                d[0] = 1; d[1] = 1; // Non-zero forces audio pipeline
+                const src = rawCtx.createBufferSource();
+                src.buffer = buf;
+                src.connect(rawCtx.destination);
+                src.start(0);
+                src.onended = () => { try { src.disconnect(); } catch(e){} };
+            }
+
+            console.log('Sync unlock complete. State:', rawCtx ? rawCtx.state : 'N/A');
         } catch(e) {
             console.error('Sync unlock error:', e);
         }
@@ -662,31 +687,32 @@
         console.log('_bootAsync started.');
         const splash = document.getElementById('splash-screen');
 
-        // Wait for context to be truly running (retry up to 3×)
-        for (let i = 0; i < 3; i++) {
+        // Wait for context to be truly running (retry up to 5×)
+        for (let i = 0; i < 5; i++) {
             try { await Tone.start(); } catch(e) { console.warn('Tone.start await failed:', e); }
-            console.log(`Context state check ${i+1}:`, Tone.context.state);
-            if (Tone.context.state === 'running') break;
-            await new Promise(r => setTimeout(r, 200));
+            const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
+            const state = rawCtx ? rawCtx.state : Tone.context.state;
+            console.log(`Context state check ${i+1}:`, state);
+            if (state === 'running') break;
+
+            // Try resume again + silent buffer on each retry
+            try {
+                if (rawCtx && typeof rawCtx.resume === 'function') rawCtx.resume();
+                if (rawCtx && typeof rawCtx.createBuffer === 'function') {
+                    const buf = rawCtx.createBuffer(1, 2, rawCtx.sampleRate || 44100);
+                    const d = buf.getChannelData(0);
+                    d[0] = 1; d[1] = 1;
+                    const src = rawCtx.createBufferSource();
+                    src.buffer = buf;
+                    src.connect(rawCtx.destination);
+                    src.start(0);
+                }
+            } catch(_) {}
+
+            await new Promise(r => setTimeout(r, 300));
         }
 
-        // Silent warmup blip — forces Samsung Chromium out of suspended state
-        try {
-            const rawCtx = Tone.context.rawContext
-                        || Tone.context._context
-                        || Tone.context;
-            if (rawCtx && rawCtx.createOscillator) {
-                const o = rawCtx.createOscillator();
-                const g = rawCtx.createGain();
-                g.gain.value = 0.0001;
-                o.connect(g);
-                g.connect(rawCtx.destination);
-                o.start();
-                o.stop(rawCtx.currentTime + 0.05);
-            }
-        } catch(_) {}
-
-        console.log('🔊 Audio context state:', Tone.context.state);
+        console.log('🔊 Final audio context state:', Tone.context.state);
 
         splash.classList.add('hidden');
         await App.init();
