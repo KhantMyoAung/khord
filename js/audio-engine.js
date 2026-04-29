@@ -431,6 +431,14 @@ const AudioEngine = (() => {
         isInitialized: () => isInitialized,
         getActiveNotes: () => [...activeNotes],
 
+        resumeAudioContext: async () => {
+            await Tone.start();
+            if (Tone.context.state === 'suspended') {
+                await Tone.context.resume();
+            }
+            return Tone.context.state;
+        },
+
         // Recording hook — set a callback to capture all audio events
         setRecordHook: (hook) => { recordHook = hook; },
         clearRecordHook: () => { recordHook = null; }

@@ -786,6 +786,13 @@ const App = (() => {
         toggleLooperTrackSolo,
         clearLooper: () => { Looper.clearAll(); updateLooperUI(); showNotification('🗑️ Looper cleared', 'info'); },
 
+        resumeAudio: async () => {
+            const state = await AudioEngine.resumeAudioContext();
+            if (state === 'running') {
+                showNotification('🔊 Audio Active', 'success');
+            }
+        },
+
         getState: () => ({
             key: ChordEngine.getCurrentKey(),
             octave: ChordEngine.getCurrentOctave(),
