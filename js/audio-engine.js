@@ -143,6 +143,48 @@ const AudioEngine = (() => {
         distortion: false
     };
 
+    // ── Mobile Audio Auto-Unlocker ─────────────────────────────────────
+    let autoUnlockerInitialized = false;
+    function setupAutoUnlocker() {
+        if (autoUnlockerInitialized) return;
+        autoUnlockerInitialized = true;
+
+        const unlockEvents = ['touchstart', 'touchend', 'mousedown', 'keydown'];
+        const unlock = async () => {
+            if (Tone.context.state !== 'running') {
+                try {
+                    await Tone.start();
+                    if (Tone.context.state === 'suspended') {
+                        await Tone.context.resume();
+                    }
+                    // Silent warmup buffer to fully unlock iOS Safari Web Audio API
+                    const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
+                    if (rawCtx && typeof rawCtx.createBuffer === 'function') {
+                        const buffer = rawCtx.createBuffer(1, 1, 22050);
+                        const source = rawCtx.createBufferSource();
+                        source.buffer = buffer;
+                        source.connect(rawCtx.destination);
+                        source.start(0);
+                    }
+                    if (Tone.context.state === 'running') {
+                        unlockEvents.forEach(evt => document.removeEventListener(evt, unlock, true));
+                    }
+                } catch (e) {
+                    console.warn('Auto-unlock failed', e);
+                }
+            } else {
+                unlockEvents.forEach(evt => document.removeEventListener(evt, unlock, true));
+            }
+        };
+
+        unlockEvents.forEach(evt => {
+            document.addEventListener(evt, unlock, { once: false, capture: true, passive: true });
+        });
+    }
+
+    // Setup auto-unlocker immediately to catch the very first interaction
+    setupAutoUnlocker();
+
     // ── Initialize ─────────────────────────────────────────────────────
     async function init() {
         if (isInitialized) return;
