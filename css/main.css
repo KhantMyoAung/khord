@@ -825,6 +825,9 @@ body::before {
     justify-content: center;
     gap: 3px;
     user-select: none;
+    -webkit-user-select: none;
+    touch-action: none;
+    -webkit-tap-highlight-color: transparent;
     min-height: 80px;
 }
 
@@ -970,6 +973,9 @@ body::before {
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
 }
 
 .inst-btn:hover {
@@ -1001,6 +1007,9 @@ body::before {
     cursor: pointer;
     transition: all var(--transition-fast);
     text-align: center;
+    touch-action: none;
+    user-select: none;
+    -webkit-user-select: none;
     text-transform: uppercase;
     letter-spacing: 0.5px;
 }

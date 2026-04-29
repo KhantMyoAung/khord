@@ -645,21 +645,25 @@
         if (splash.classList.contains('hidden')) return;
         _appBooting = true;
 
-        // ── SYNC unlock inside user gesture (Shared Piano pattern) ──
-        // This MUST run synchronously — no await before these calls!
+        // ── SYNC unlock inside user gesture (Simple Project pattern) ──
         try {
-            const rawCtx = Tone.context.rawContext || Tone.context._context || Tone.context;
-            console.log('Raw context state before unlock:', rawCtx ? rawCtx.state : 'N/A');
+            // 1. Create BRAND NEW context inside gesture
+            const AudioContext = window.AudioContext || window.webkitAudioContext;
+            const rawCtx = new AudioContext();
+            
+            // 2. Point Tone.js to this fresh context
+            Tone.setContext(rawCtx);
+            console.log('Created fresh AudioContext and set Tone context.');
 
-            // 1. Synchronous resume
+            // 3. Synchronous resume
             if (rawCtx && typeof rawCtx.resume === 'function') {
                 rawCtx.resume();
             }
 
-            // 2. Tone.start() synchronously
+            // 4. Tone.start() synchronously
             Tone.start();
 
-            // 3. Silent buffer with REAL data (forces iOS/Samsung audio HW)
+            // 5. Silent buffer with REAL data (forces iOS/Samsung audio HW)
             if (rawCtx && typeof rawCtx.createBuffer === 'function') {
                 const buf = rawCtx.createBuffer(1, 2, rawCtx.sampleRate || 44100);
                 const d = buf.getChannelData(0);
@@ -671,7 +675,7 @@
                 src.onended = () => { try { src.disconnect(); } catch(e){} };
             }
 
-            console.log('Sync unlock complete. State:', rawCtx ? rawCtx.state : 'N/A');
+            console.log('Sync unlock complete with fresh context. State:', rawCtx.state);
         } catch(e) {
             console.error('Sync unlock error:', e);
         }
